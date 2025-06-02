@@ -1,0 +1,130 @@
+### Variables
+@baseUrl = http://localhost:5001
+@token = your_access_token_here
+
+### Health Check
+GET {{baseUrl}}/
+Content-Type: application/json
+
+### API Info
+GET {{baseUrl}}/api
+Content-Type: application/json
+
+### User Registration
+POST {{baseUrl}}/api/user/register
+Content-Type: application/json
+
+{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "gender": "male",
+    "password": "password123"
+}
+
+### User Login
+POST {{baseUrl}}/api/user/login
+Content-Type: application/json
+
+{
+    "email": "john@example.com",
+    "password": "password123"
+}
+
+### User ganti data user
+PUT {{baseUrl}}/api/user/profile
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsIm5hbWUiOiJKb2huIERvZSIsInVzZXJFbWFpbCI6ImpvaG5AZXhhbXBsZS5jb20iLCJpYXQiOjE3NDgxNzA5ODcsImV4cCI6MTc0ODE3MTg4N30.EvQLkJl_kaPDKRBdFy5o2EpgTrYd5bXpikeEbC2G2ZQ
+
+{
+    "name": "John Updated",
+    "email": "johnexample.com",
+    "gender": "male",
+    "password": "password123"
+}
+
+
+### Get User Profile
+GET {{baseUrl}}/api/user/me
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsIm5hbWUiOiJKb2huIERvZSIsInVzZXJFbWFpbCI6ImpvaG5AZXhhbXBsZS5jb20iLCJpYXQiOjE3NDgwODIyMjEsImV4cCI6MTc0ODA4MzEyMX0.eqZ5r6yeKNAbOsGzcZnbmscHWAESyDEkBdpRTNv_gdQ
+
+### User Logout
+DELETE {{baseUrl}}/api/user/logout
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Create Category
+POST {{baseUrl}}/api/categories
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsIm5hbWUiOiJKb2huIERvZSIsInVzZXJFbWFpbCI6ImpvaG5AZXhhbXBsZS5jb20iLCJpYXQiOjE3NDgwODIyMjEsImV4cCI6MTc0ODA4MzEyMX0.eqZ5r6yeKNAbOsGzcZnbmscHWAESyDEkBdpRTNv_gdQ
+
+{
+    "name": "Gaji",
+    "jenis": "income"
+}
+
+### Get All Categories
+GET {{baseUrl}}/api/categories
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Get Categories by Type
+GET {{baseUrl}}/api/categories/income
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Update Category
+PUT {{baseUrl}}/api/categories/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "name": "Gaji Bulanan",
+    "jenis": "income"
+}
+
+### Delete Category
+DELETE {{baseUrl}}/api/categories/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Create Transaction
+POST {{baseUrl}}/api/transactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "amount": 1000000,
+    "description": "Gaji bulanan",
+    "date": "2024-03-20",
+    "categoryId": 1,
+    "type": "income"
+}
+
+### Get All Transactions
+GET {{baseUrl}}/api/transactions
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Get Transactions by Date Range
+GET {{baseUrl}}/api/transactions/range?start=2024-03-01&end=2024-03-31
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Update Transaction
+PUT {{baseUrl}}/api/transactions/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "amount": 1500000,
+    "description": "Gaji bulanan + bonus",
+    "date": "2024-03-20",
+    "categoryId": 1,
+    "type": "income"
+}
+
+### Delete Transaction
+DELETE {{baseUrl}}/api/transactions/1
+Content-Type: application/json
+Authorization: Bearer {{token}} 

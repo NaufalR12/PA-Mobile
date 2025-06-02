@@ -1,0 +1,36 @@
+steps:
+  # Step 1: Ambil file env.yaml dari Cloud Storage
+  - name: "gcr.io/cloud-builders/gsutil"
+    args: ["cp", "gs://projekakhir/.env.yaml", "/workspace/env.yaml"]
+
+  # Step 2: Build Docker image
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["build", "-t", "gcr.io/$PROJECT_ID/projek-akhir", "."]
+    dir: "be"
+
+  # Step 3: Push image ke Artifact Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/projek-akhir"]
+
+  # Step 4: Deploy ke Cloud Run menggunakan env.yaml
+  - name: "gcr.io/cloud-builders/gcloud"
+    args:
+      [
+        "run",
+        "deploy",
+        "projek-akhir",
+        "--image",
+        "gcr.io/$PROJECT_ID/projek-akhir",
+        "--timeout",
+        "360s",
+        "--port",
+        "5001",
+        "--region",
+        "us-central1",
+        "--allow-unauthenticated",
+        "--env-vars-file",
+        "/workspace/env.yaml",
+      ]
+
+options:
+  logging: CLOUD_LOGGING_ONLY
