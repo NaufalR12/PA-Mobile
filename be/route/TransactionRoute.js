@@ -1,25 +1,24 @@
 import express from "express";
 import { TransactionController } from "../controller/TransactionController.js";
-import { verifyToken } from "../middleware/Auth.js";
 
 const router = express.Router();
 
 // Get transactions by date range (harus di atas /:id)
-router.get("/date-range", verifyToken, TransactionController.getByDateRange);
+router.get("/date-range", TransactionController.getByDateRange);
 
 // Get transaction by ID
-router.get("/:id", verifyToken, TransactionController.getById);
+router.get("/:id", TransactionController.getById);
 
 // Get all transactions for user
-router.get("/", verifyToken, TransactionController.getByUserId);
+router.get("/", TransactionController.getByUserId);
 
 // Create transaction
-router.post("/", verifyToken, TransactionController.create);
+router.post("/", TransactionController.create);
 
 // Update transaction
-router.put("/:id", verifyToken, TransactionController.update);
+router.put("/:id", TransactionController.update);
 
 // Delete transaction
-router.delete("/:id", verifyToken, TransactionController.delete);
+router.delete("/:id", TransactionController.delete);
 
 export default router;

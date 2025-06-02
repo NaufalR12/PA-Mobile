@@ -2,7 +2,6 @@ import express from "express";
 import User from "../model/User.js";
 import Transaction from "../model/Transaction.js";
 import Category from "../model/Category.js";
-import { verifyToken } from "../middleware/Auth.js";
 import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -20,20 +19,16 @@ const upload = multer({ storage: storage });
 // Auth routes
 router.post("/register", UserController.register);
 router.post("/login", UserController.login);
-router.post("/refresh-token", UserController.refreshToken); // Tambahkan route ini
 
 // Profile routes
-router.get("/me", verifyToken, UserController.getProfile);
-router.get("/profile/photo", verifyToken, UserController.getProfilePhoto);
+router.get("/me", UserController.getProfile);
 router.put(
   "/profile",
-  verifyToken,
   upload.single("foto_profil"),
   UserController.updateProfile
 );
-router.post("/logout", verifyToken, UserController.logout);
-
-// Delete user account
-router.delete("/delete", verifyToken, UserController.deleteAccount);
+router.get("/profile/photo", UserController.getProfilePhoto);
+router.post("/logout", UserController.logout);
+router.delete("/delete", UserController.deleteAccount);
 
 export default router;

@@ -7,32 +7,28 @@ export const PlanController = {
   create: async (req, res) => {
     try {
       const { categoryId, amount, description } = req.body;
-      const userId = req.user.userId;
+      const userId = req.query.userId;
+
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
 
       // Validasi data
-      if (!categoryId) {
+      if (!amount || !categoryId) {
         return res.status(400).json({
           status: "error",
-          message: "Kategori harus dipilih",
+          message: "Nominal dan kategori wajib diisi",
         });
       }
 
-      if (!amount || amount <= 0) {
-        return res.status(400).json({
-          status: "error",
-          message: "Jumlah harus lebih dari 0",
-        });
-      }
+      // Cek apakah kategori ada dan milik user yang sama
+      const category = await Category.findOne({
+        where: { id: categoryId, userId },
+      });
 
-      if (!description) {
-        return res.status(400).json({
-          status: "error",
-          message: "Deskripsi harus diisi",
-        });
-      }
-
-      // Cek apakah kategori ada
-      const category = await Category.findByPk(categoryId);
       if (!category) {
         return res.status(404).json({
           status: "error",
@@ -40,7 +36,7 @@ export const PlanController = {
         });
       }
 
-      // Cek apakah kategori sudah memiliki perencanaan
+      // Cek apakah sudah ada plan untuk kategori ini
       const existingPlan = await Plan.findOne({
         where: { categoryId, userId },
       });
@@ -48,25 +44,22 @@ export const PlanController = {
       if (existingPlan) {
         return res.status(400).json({
           status: "error",
-          message: "Kategori ini sudah memiliki perencanaan",
+          message: "Sudah ada rencana untuk kategori ini",
         });
       }
 
       const plan = await Plan.create({
-        userId,
         categoryId,
+        userId,
         amount,
-        description,
         remainingAmount: amount,
+        description,
       });
 
       res.status(201).json({
         status: "success",
         message: "Rencana berhasil ditambahkan",
-        data: {
-          ...plan.toJSON(),
-          categoryName: category.name,
-        },
+        data: plan,
       });
     } catch (error) {
       console.error("Error in create plan:", error);
@@ -79,27 +72,28 @@ export const PlanController = {
 
   getByUserId: async (req, res) => {
     try {
-      const userId = req.user.userId;
+      const userId = req.query.userId;
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
 
       const plans = await Plan.findAll({
         where: { userId },
         include: [
           {
             model: Category,
-            attributes: ["name"],
+            attributes: ["id", "name"],
           },
         ],
         order: [["createdAt", "DESC"]],
       });
 
-      const formattedPlans = plans.map((plan) => ({
-        ...plan.toJSON(),
-        categoryName: plan.Category ? plan.Category.name : null,
-      }));
-
       res.json({
         status: "success",
-        data: formattedPlans,
+        data: plans,
       });
     } catch (error) {
       console.error("Error in get plans:", error);
@@ -113,14 +107,21 @@ export const PlanController = {
   getById: async (req, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user.userId;
+      const userId = req.query.userId;
+
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
 
       const plan = await Plan.findOne({
         where: { id, userId },
         include: [
           {
             model: Category,
-            attributes: ["name"],
+            attributes: ["id", "name"],
           },
         ],
       });
@@ -134,10 +135,7 @@ export const PlanController = {
 
       res.json({
         status: "success",
-        data: {
-          ...plan.toJSON(),
-          categoryName: plan.Category ? plan.Category.name : null,
-        },
+        data: plan,
       });
     } catch (error) {
       console.error("Error in get plan:", error);
@@ -151,10 +149,15 @@ export const PlanController = {
   update: async (req, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user.userId;
-      const { categoryId, amount, description } = req.body;
+      const { amount, description } = req.body;
+      const userId = req.query.userId;
 
-      console.log("Updating plan with data:", { categoryId, amount, description });
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
 
       const plan = await Plan.findOne({
         where: { id, userId },
@@ -167,56 +170,26 @@ export const PlanController = {
         });
       }
 
-      // Cek apakah kategori ada jika diupdate
-      if (categoryId) {
-        const category = await Category.findByPk(categoryId);
-        if (!category) {
-          return res.status(404).json({
-            status: "error",
-            message: "Kategori tidak ditemukan",
-          });
-        }
-      }
+      // Hitung selisih amount untuk menyesuaikan remainingAmount
+      const amountDiff = amount - plan.amount;
+      const newRemainingAmount = plan.remainingAmount + amountDiff;
 
-      try {
-        // Update plan's amount and other fields first
-        await plan.update({
-          categoryId: categoryId || plan.categoryId,
-          amount: amount || plan.amount,
-          description: description || plan.description,
-        });
+      await plan.update({
+        amount,
+        remainingAmount: newRemainingAmount,
+        description: description || plan.description,
+      });
 
-        // Recalculate remainingAmount based on actual expenses
-        await PlanController.recalculateForPlanByCategory(userId, plan.categoryId);
-
-        // Fetch the updated plan
-        const updatedPlan = await Plan.findOne({
-          where: { id, userId },
-          include: [{ model: Category, attributes: ["name"] }],
-        });
-
-        if (!updatedPlan) {
-          throw new Error("Failed to fetch updated plan");
-        }
-
-        res.json({
-          status: "success",
-          message: "Rencana berhasil diperbarui",
-          data: {
-            ...updatedPlan.toJSON(),
-            categoryName: updatedPlan.Category ? updatedPlan.Category.name : null,
-          },
-        });
-      } catch (updateError) {
-        console.error("Error during plan update:", updateError);
-        throw updateError;
-      }
+      res.json({
+        status: "success",
+        message: "Rencana berhasil diperbarui",
+        data: plan,
+      });
     } catch (error) {
       console.error("Error in update plan:", error);
       res.status(500).json({
         status: "error",
         message: "Gagal memperbarui rencana",
-        detail: error.message
       });
     }
   },
@@ -224,7 +197,14 @@ export const PlanController = {
   delete: async (req, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user.userId;
+      const userId = req.query.userId;
+
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
 
       const plan = await Plan.findOne({
         where: { id, userId },

@@ -1,22 +1,15 @@
 import express from "express";
 import { CategoryController } from "../controller/CategoryController.js";
-import { verifyToken } from "../middleware/Auth.js";
 
 const router = express.Router();
 
 // Create category
-router.post("/", verifyToken, CategoryController.create);
+router.post("/", CategoryController.create);
 
 // Get all categories
-router.get("/", verifyToken, CategoryController.getAll);
+router.get("/", CategoryController.getAll);
 
 // Get categories by type
-router.get("/type/:type", verifyToken, CategoryController.getByType);
-
-// Update category
-router.put("/:id", verifyToken, CategoryController.update);
-
-// Delete category
-router.delete("/:id", verifyToken, CategoryController.delete);
+router.get("/type/:type", CategoryController.getByType);
 
 export default router;

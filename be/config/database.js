@@ -3,19 +3,19 @@ import dotenv from "dotenv";
 import path from "path";
 
 // Log the current directory and .env file path
-console.log('Current directory:', process.cwd());
-console.log('.env file path:', path.resolve(process.cwd(), '.env'));
+console.log("Current directory:", process.cwd());
+console.log(".env file path:", path.resolve(process.cwd(), ".env"));
 
 // Load environment variables
 dotenv.config();
 
 // Log all environment variables (for debugging)
-console.log('All environment variables:', {
+console.log("All environment variables:", {
   DB_HOST: process.env.DB_HOST,
   DB_NAME: process.env.DB_NAME,
   DB_USERNAME: process.env.DB_USERNAME,
-  DB_PASSWORD: process.env.DB_PASSWORD ? '****' : undefined,
-  NODE_ENV: process.env.NODE_ENV
+  DB_PASSWORD: process.env.DB_PASSWORD ? "****" : undefined,
+  NODE_ENV: process.env.NODE_ENV,
 });
 
 const sequelize = new Sequelize(

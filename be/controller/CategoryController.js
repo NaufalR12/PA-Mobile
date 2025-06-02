@@ -4,7 +4,14 @@ export const CategoryController = {
   create: async (req, res) => {
     try {
       const { name } = req.body;
-      const userId = req.user.userId; // Get userId from authenticated user
+      const userId = req.query.userId;
+
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
 
       // Validasi data
       if (!name) {
@@ -47,7 +54,14 @@ export const CategoryController = {
 
   getAll: async (req, res) => {
     try {
-      const userId = req.user.userId; // Get userId from authenticated user
+      const userId = req.query.userId;
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
+
       const categories = await Category.findAll({
         where: { userId },
         order: [["name", "ASC"]],
@@ -68,18 +82,17 @@ export const CategoryController = {
 
   getByType: async (req, res) => {
     try {
-      const { type } = req.params;
-      const userId = req.user.userId; // Get userId from authenticated user
-
-      if (!["income", "expense"].includes(type)) {
+      const userId = req.query.userId;
+      if (!userId) {
         return res.status(400).json({
           status: "error",
-          message: "Tipe kategori harus income atau expense",
+          message: "User ID diperlukan",
         });
       }
 
+      const { type } = req.params;
       const categories = await Category.findAll({
-        where: { type, userId },
+        where: { userId },
         order: [["name", "ASC"]],
       });
 
@@ -100,7 +113,14 @@ export const CategoryController = {
     try {
       const { id } = req.params;
       const { name } = req.body;
-      const userId = req.user.userId; // Get userId from authenticated user
+      const userId = req.query.userId;
+
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
 
       const category = await Category.findOne({
         where: { id, userId },
@@ -113,23 +133,7 @@ export const CategoryController = {
         });
       }
 
-      // Cek apakah nama kategori sudah ada untuk user ini
-      if (name && name !== category.name) {
-        const existingCategory = await Category.findOne({
-          where: { name, userId },
-        });
-
-        if (existingCategory) {
-          return res.status(400).json({
-            status: "error",
-            message: "Kategori sudah ada",
-          });
-        }
-      }
-
-      await category.update({
-        name: name || category.name,
-      });
+      await category.update({ name });
 
       res.json({
         status: "success",
@@ -148,7 +152,14 @@ export const CategoryController = {
   delete: async (req, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user.userId; // Get userId from authenticated user
+      const userId = req.query.userId;
+
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
 
       const category = await Category.findOne({
         where: { id, userId },

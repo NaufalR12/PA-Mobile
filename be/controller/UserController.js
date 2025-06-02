@@ -1,36 +1,9 @@
-import jwt from "jsonwebtoken"; // Tambahkan impor ini
 import bcrypt from "bcrypt";
 import User from "../model/User.js";
 import Transaction from "../model/Transaction.js";
 import Category from "../model/Category.js";
-import Plan from "../model/Plan.js"; // Impor model Plan
-import {
-  generateAccessToken,
-  generateRefreshToken,
-} from "../middleware/Auth.js";
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import Plan from "../model/Plan.js";
 import sequelize from "../config/database.js";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Daftar kategori default
-const defaultCategories = [
-  "Hiburan",
-  "Makanan",
-  "Transportasi",
-  "Investasi",
-  "Gaji",
-  "Hadiah",
-  "Pakaian",
-  "Kesehatan",
-  "Tagihan",
-  "Belanja",
-  "Bonus",
-  "Lainnya",
-];
 
 export const UserController = {
   register: async (req, res) => {
@@ -113,46 +86,16 @@ export const UserController = {
         });
       }
 
-      // Generate tokens
-      const userId = user.id;
-      const name = user.name;
-      const userEmail = user.email;
-      const gender = user.gender;
-
-      const accessToken = generateAccessToken({
-        userId,
-        name,
-        email: userEmail,
-        gender,
-      });
-      const refreshToken = generateRefreshToken({
-        userId,
-        name,
-        email: userEmail,
-        gender,
-      });
-
-      console.log("Generated tokens for user:", userId);
-
-      // Update refresh token in database
-      await user.update({ refresh_token: refreshToken });
-      console.log("Updated refresh token in database");
-
-      const response = {
+      res.status(200).json({
         status: "success",
         message: "Login berhasil",
         data: {
-          id: userId,
-          name,
-          email: userEmail,
-          gender,
-          accessToken,
-          refreshToken,
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          gender: user.gender,
         },
-      };
-
-      console.log("Sending login response:", response);
-      res.status(200).json(response);
+      });
     } catch (error) {
       console.error("Error in login:", error);
       res.status(500).json({
@@ -164,7 +107,15 @@ export const UserController = {
 
   getProfile: async (req, res) => {
     try {
-      const user = await User.findByPk(req.user.userId, {
+      const userId = req.query.userId;
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
+
+      const user = await User.findByPk(userId, {
         attributes: ["id", "name", "email", "gender", "foto_profil"],
       });
 
@@ -190,7 +141,15 @@ export const UserController = {
 
   getProfilePhoto: async (req, res) => {
     try {
-      const user = await User.findByPk(req.user.userId, {
+      const userId = req.query.userId;
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
+
+      const user = await User.findByPk(userId, {
         attributes: ["foto_profil"],
       });
 
@@ -218,6 +177,14 @@ export const UserController = {
 
   updateProfile: async (req, res) => {
     try {
+      const userId = req.query.userId;
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
+
       const { name, gender } = req.body;
       const updateData = {};
 
@@ -225,7 +192,7 @@ export const UserController = {
       if (gender) updateData.gender = gender;
       if (req.file) updateData.foto_profil = req.file.buffer;
 
-      const user = await User.findByPk(req.user.userId);
+      const user = await User.findByPk(userId);
       if (!user) {
         return res.status(404).json({
           status: "error",
@@ -256,16 +223,6 @@ export const UserController = {
 
   logout: async (req, res) => {
     try {
-      const user = await User.findByPk(req.user.userId);
-      if (!user) {
-        return res.status(404).json({
-          status: "error",
-          message: "User tidak ditemukan",
-        });
-      }
-
-      await user.update({ refresh_token: null });
-
       res.status(200).json({
         status: "success",
         message: "Logout berhasil",
@@ -280,9 +237,15 @@ export const UserController = {
   },
 
   deleteAccount: async (req, res) => {
-    const userId = req.user.userId;
-
     try {
+      const userId = req.query.userId;
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
+
       // Mulai transaction untuk memastikan semua operasi berhasil atau tidak sama sekali
       const result = await sequelize.transaction(async (t) => {
         // 1. Hapus Transactions terlebih dahulu
@@ -326,83 +289,10 @@ export const UserController = {
       }
     } catch (error) {
       console.error("Error in deleteAccount:", error);
-      // Log detail error untuk debugging
-      console.error("Error details:", {
-        name: error.name,
-        message: error.message,
-        stack: error.stack,
-      });
-
       res.status(500).json({
         status: "error",
         message: "Gagal menghapus akun.",
         detail: error.message,
-      });
-    }
-  },
-
-  refreshToken: async (req, res) => {
-    try {
-      const { refreshToken } = req.body;
-      if (!refreshToken) {
-        return res.status(401).json({
-          status: "error",
-          message: "Refresh token tidak disediakan",
-        });
-      }
-
-      // Cari user berdasarkan refresh token yang ada di database
-      const user = await User.findOne({
-        where: { refresh_token: refreshToken },
-      });
-
-      if (!user) {
-        return res.status(403).json({
-          status: "error",
-          message: "Refresh token tidak valid atau tidak ditemukan di database",
-        });
-      }
-
-      // Verifikasi refresh token (memastikan tidak kedaluwarsa dan signature benar)
-      jwt.verify(
-        refreshToken,
-        process.env.REFRESH_TOKEN_SECRET,
-        (err, decoded) => {
-          if (err) {
-            return res.status(403).json({
-              status: "error",
-              message: "Refresh token tidak valid atau kedaluwarsa",
-              detail: err.message,
-            });
-          }
-
-          // Pastikan user dari token cocok dengan user yang ditemukan di DB (opsional, tapi baik)
-          if (decoded.userId !== user.id) {
-            return res.status(403).json({
-              status: "error",
-              message: "Refresh token tidak cocok dengan pengguna",
-            });
-          }
-
-          // Jika refresh token valid, buat access token baru
-          const newAccessToken = generateAccessToken({
-            userId: user.id,
-            name: user.name,
-            email: user.email,
-            gender: user.gender,
-          });
-
-          res.json({
-            status: "success",
-            accessToken: newAccessToken,
-          });
-        }
-      );
-    } catch (error) {
-      console.error("Error in refreshToken:", error);
-      res.status(500).json({
-        status: "error",
-        message: "Gagal me-refresh token",
       });
     }
   },
