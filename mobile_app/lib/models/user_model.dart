@@ -18,17 +18,29 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      id: json['id'],
-      name: json['name'],
-      email: json['email'],
-      gender: json['gender'],
-      fotoProfil: json['foto_profil'],
-      createdAt: DateTime.parse(
-          json['created_at'] ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(
-          json['updated_at'] ?? DateTime.now().toIso8601String()),
-    );
+    if (json == null) {
+      throw Exception('JSON data is null');
+    }
+
+    try {
+      return User(
+        id: json['id'] ?? 0,
+        name: json['name'] ?? '',
+        email: json['email'] ?? '',
+        gender: json['gender'] ?? '',
+        fotoProfil: json['foto_profil'] ?? json['fotoProfil'],
+        createdAt: DateTime.parse(json['created_at'] ??
+            json['createdAt'] ??
+            DateTime.now().toIso8601String()),
+        updatedAt: DateTime.parse(json['updated_at'] ??
+            json['updatedAt'] ??
+            DateTime.now().toIso8601String()),
+      );
+    } catch (e) {
+      print('Error parsing User JSON: $e');
+      print('JSON data: $json');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {

@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
+import 'providers/transaction_provider.dart';
+import 'providers/category_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,6 +19,8 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => TransactionProvider()),
+        ChangeNotifierProvider(create: (_) => CategoryProvider()),
       ],
       child: MaterialApp(
         title: 'Aplikasi Manajemen Keuangan',
