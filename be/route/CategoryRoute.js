@@ -12,4 +12,10 @@ router.get("/", CategoryController.getAll);
 // Get categories by type
 router.get("/type/:type", CategoryController.getByType);
 
+// Update category
+router.put("/:id", CategoryController.update);
+
+// Delete category
+router.delete("/:id", CategoryController.delete);
+
 export default router;

@@ -4,8 +4,8 @@ class User {
   final String email;
   final String gender;
   final String? fotoProfil;
-  final DateTime createdAt;
-  final DateTime updatedAt;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   User({
     required this.id,
@@ -13,8 +13,8 @@ class User {
     required this.email,
     required this.gender,
     this.fotoProfil,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -29,12 +29,12 @@ class User {
         email: json['email'] ?? '',
         gender: json['gender'] ?? '',
         fotoProfil: json['foto_profil'] ?? json['fotoProfil'],
-        createdAt: DateTime.parse(json['created_at'] ??
-            json['createdAt'] ??
-            DateTime.now().toIso8601String()),
-        updatedAt: DateTime.parse(json['updated_at'] ??
-            json['updatedAt'] ??
-            DateTime.now().toIso8601String()),
+        createdAt: json['created_at'] != null || json['createdAt'] != null
+            ? DateTime.parse(json['created_at'] ?? json['createdAt'])
+            : null,
+        updatedAt: json['updated_at'] != null || json['updatedAt'] != null
+            ? DateTime.parse(json['updated_at'] ?? json['updatedAt'])
+            : null,
       );
     } catch (e) {
       print('Error parsing User JSON: $e');
@@ -50,8 +50,8 @@ class User {
       'email': email,
       'gender': gender,
       'foto_profil': fotoProfil,
-      'created_at': createdAt.toIso8601String(),
-      'updated_at': updatedAt.toIso8601String(),
+      if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
+      if (updatedAt != null) 'updated_at': updatedAt!.toIso8601String(),
     };
   }
 }

@@ -201,32 +201,6 @@ class _TransactionScreenState extends State<TransactionScreen> {
     );
   }
 
-  Future<void> _showDeleteConfirmation(Transaction transaction) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Hapus Transaksi'),
-        content: const Text('Apakah Anda yakin ingin menghapus transaksi ini?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Hapus'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && mounted) {
-      final provider = Provider.of<TransactionProvider>(context, listen: false);
-      await provider.deleteTransaction(transaction.id);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -258,31 +232,90 @@ class _TransactionScreenState extends State<TransactionScreen> {
             itemCount: transactionProvider.transactions.length,
             itemBuilder: (context, index) {
               final transaction = transactionProvider.transactions[index];
-              return ListTile(
-                leading: Icon(
-                  transaction.type == 'income'
-                      ? Icons.arrow_upward
-                      : Icons.arrow_downward,
-                  color:
-                      transaction.type == 'income' ? Colors.green : Colors.red,
+              return Dismissible(
+                key: Key(transaction.id.toString()),
+                background: Container(
+                  color: Colors.red,
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 16),
+                  child: const Icon(
+                    Icons.delete,
+                    color: Colors.white,
+                  ),
                 ),
-                title: Text(
-                    categoryProvider.getCategoryName(transaction.categoryId)),
-                subtitle: Text(transaction.description),
-                trailing: Text(
-                  'Rp ${transaction.amount.toStringAsFixed(0)}',
-                  style: TextStyle(
+                direction: DismissDirection.endToStart,
+                confirmDismiss: (direction) async {
+                  return await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Hapus Transaksi'),
+                          content: const Text(
+                              'Apakah Anda yakin ingin menghapus transaksi ini?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Batal'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red),
+                              child: const Text('Hapus'),
+                            ),
+                          ],
+                        ),
+                      ) ??
+                      false;
+                },
+                onDismissed: (direction) async {
+                  try {
+                    await transactionProvider.deleteTransaction(transaction.id);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Transaksi berhasil dihapus'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Gagal menghapus transaksi: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: ListTile(
+                  leading: Icon(
+                    transaction.type == 'income'
+                        ? Icons.arrow_upward
+                        : Icons.arrow_downward,
                     color: transaction.type == 'income'
                         ? Colors.green
                         : Colors.red,
-                    fontWeight: FontWeight.bold,
                   ),
-                ),
-                onTap: () => _showTransactionDialog(
-                  context,
-                  transactionProvider,
-                  categoryProvider,
-                  transaction: transaction,
+                  title: Text(
+                      categoryProvider.getCategoryName(transaction.categoryId)),
+                  subtitle: Text(transaction.description),
+                  trailing: Text(
+                    'Rp ${NumberFormat('#,###').format(transaction.amount)}',
+                    style: TextStyle(
+                      color: transaction.type == 'income'
+                          ? Colors.green
+                          : Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  onTap: () => _showTransactionDialog(
+                    context,
+                    transactionProvider,
+                    categoryProvider,
+                    transaction: transaction,
+                  ),
                 ),
               );
             },

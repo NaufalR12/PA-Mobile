@@ -8,40 +8,17 @@ class TransactionService {
       'https://projek-akhir-505940949397.us-central1.run.app/api';
   final storage = const FlutterSecureStorage();
 
-  Future<String?> _getAccessToken() async {
-    return await storage.read(key: 'access_token');
-  }
-
-  Future<int?> _getUserId() async {
-    final token = await _getAccessToken();
-    if (token == null) return null;
-
-    try {
-      final parts = token.split('.');
-      if (parts.length != 3) return null;
-
-      final payload = parts[1];
-      final normalized = base64Url.normalize(payload);
-      final decoded = utf8.decode(base64Url.decode(normalized));
-      final data = json.decode(decoded);
-      return data['userId'];
-    } catch (e) {
-      print('Error decoding token: $e');
-      return null;
-    }
+  Future<String?> _getUserId() async {
+    return await storage.read(key: 'user_id');
   }
 
   Future<List<Transaction>> getTransactions() async {
-    final token = await _getAccessToken();
-    if (token == null) throw Exception('Token tidak ditemukan');
-
     final userId = await _getUserId();
     if (userId == null) throw Exception('User ID tidak ditemukan');
 
     final response = await http.get(
       Uri.parse('$baseUrl/transaction?userId=$userId'),
       headers: {
-        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
     );
@@ -65,9 +42,6 @@ class TransactionService {
   }
 
   Future<bool> createTransaction(Transaction transaction) async {
-    final token = await _getAccessToken();
-    if (token == null) throw Exception('Token tidak ditemukan');
-
     final userId = await _getUserId();
     if (userId == null) throw Exception('User ID tidak ditemukan');
 
@@ -81,12 +55,10 @@ class TransactionService {
 
     print('Creating transaction at: $baseUrl/transaction?userId=$userId');
     print('Request body: $requestBody');
-    print('Using token: $token');
 
     final response = await http.post(
       Uri.parse('$baseUrl/transaction?userId=$userId'),
       headers: {
-        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
       body: json.encode(requestBody),
@@ -105,9 +77,6 @@ class TransactionService {
   }
 
   Future<bool> updateTransaction(Transaction transaction) async {
-    final token = await _getAccessToken();
-    if (token == null) throw Exception('Token tidak ditemukan');
-
     final userId = await _getUserId();
     if (userId == null) throw Exception('User ID tidak ditemukan');
 
@@ -117,12 +86,12 @@ class TransactionService {
       'categoryId': transaction.categoryId,
       'description': transaction.description,
       'date': transaction.date.toIso8601String(),
+      'userId': userId,
     };
 
     final response = await http.put(
-      Uri.parse('$baseUrl/transaction/${transaction.id}?userId=$userId'),
+      Uri.parse('$baseUrl/transaction/${transaction.id}'),
       headers: {
-        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
       body: json.encode(requestBody),
@@ -138,16 +107,12 @@ class TransactionService {
   }
 
   Future<bool> deleteTransaction(int id) async {
-    final token = await _getAccessToken();
-    if (token == null) throw Exception('Token tidak ditemukan');
-
     final userId = await _getUserId();
     if (userId == null) throw Exception('User ID tidak ditemukan');
 
     final response = await http.delete(
       Uri.parse('$baseUrl/transaction/$id?userId=$userId'),
       headers: {
-        'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
       },
     );

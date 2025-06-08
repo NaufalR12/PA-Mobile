@@ -28,6 +28,63 @@ class CategoryProvider with ChangeNotifier {
     }
   }
 
+  Future<bool> createCategory(String name) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final success = await _categoryService.createCategory(name);
+      if (success) {
+        await loadCategories();
+      }
+      return success;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updateCategory(Category category) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final success = await _categoryService.updateCategory(category);
+      if (success) {
+        await loadCategories();
+      }
+      return success;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteCategory(int id) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final success = await _categoryService.deleteCategory(id);
+      if (success) {
+        await loadCategories();
+      }
+      return success;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   void clearError() {
     _error = null;
     notifyListeners();

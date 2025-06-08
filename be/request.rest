@@ -1,5 +1,5 @@
 ### Variables
-@baseUrl = http://localhost:5001
+@baseUrl = https://projek-akhir-505940949397.us-central1.run.app/
 @token = your_access_token_here
 
 ### Health Check
@@ -26,8 +26,8 @@ POST {{baseUrl}}/api/user/login
 Content-Type: application/json
 
 {
-    "email": "john@example.com",
-    "password": "password123"
+    "email": "naufal@gmail.com",
+    "password": "123456"
 }
 
 ### User ganti data user
