@@ -5,6 +5,7 @@ import '../providers/transaction_provider.dart';
 import '../models/transaction_model.dart';
 import 'login_screen.dart';
 import 'package:intl/intl.dart';
+import 'map_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -208,20 +209,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            _summaryCard(
-                              icon: '👜',
-                              title: 'Pockets',
-                              value: '7 Pockets',
-                              color: Colors.brown.shade50,
-                              textColor: Colors.brown.shade800,
+                            Expanded(
+                              child: _summaryCard(
+                                icon: '👜',
+                                title: 'Pockets',
+                                value: '7 Pockets',
+                                color: Colors.brown.shade50,
+                                textColor: Colors.brown.shade800,
+                              ),
                             ),
                             const SizedBox(width: 12),
-                            _summaryCard(
-                              icon: '🎯',
-                              title: 'Goals',
-                              value: '10 Goals',
-                              color: Colors.blue.shade50,
-                              textColor: Colors.blue.shade800,
+                            Expanded(
+                              child: GestureDetector(
+                                onTap: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const MapScreen()),
+                                  );
+                                },
+                                child: _summaryCard(
+                                  icon: '🏦',
+                                  title: 'Bank & ATM',
+                                  value: 'Terdekat',
+                                  color: Colors.blue.shade50,
+                                  textColor: Colors.blue.shade800,
+                                ),
+                              ),
                             ),
                           ],
                         ),
