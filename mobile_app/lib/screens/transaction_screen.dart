@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import '../providers/transaction_provider.dart';
 import '../providers/category_provider.dart';
 import '../models/transaction_model.dart';
@@ -14,14 +15,45 @@ class TransactionScreen extends StatefulWidget {
 }
 
 class _TransactionScreenState extends State<TransactionScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      Provider.of<TransactionProvider>(context, listen: false)
-          .loadTransactions();
-      Provider.of<CategoryProvider>(context, listen: false).loadCategories();
+    initializeDateFormatting('id_ID', null).then((_) {
+      Future.microtask(() {
+        Provider.of<TransactionProvider>(context, listen: false)
+            .loadTransactions();
+        Provider.of<CategoryProvider>(context, listen: false).loadCategories();
+      });
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Transaction> _filterTransactions(
+      List<Transaction> transactions, CategoryProvider categoryProvider) {
+    if (_searchQuery.isEmpty) {
+      return transactions;
+    }
+
+    return transactions.where((transaction) {
+      final categoryName = categoryProvider
+          .getCategoryName(transaction.categoryId)
+          .toLowerCase();
+      final description = transaction.description.toLowerCase();
+      final amount = transaction.amount.toString();
+      final searchLower = _searchQuery.toLowerCase();
+
+      return categoryName.contains(searchLower) ||
+          description.contains(searchLower) ||
+          amount.contains(searchLower);
+    }).toList();
   }
 
   void _showTransactionDialog(
@@ -207,120 +239,182 @@ class _TransactionScreenState extends State<TransactionScreen> {
       appBar: AppBar(
         title: const Text('Transaksi'),
       ),
-      body: Consumer2<TransactionProvider, CategoryProvider>(
-        builder: (context, transactionProvider, categoryProvider, _) {
-          if (transactionProvider.isLoading || categoryProvider.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (transactionProvider.error != null) {
-            return Center(
-              child: Text(
-                'Error: ${transactionProvider.error}',
-                style: const TextStyle(color: Colors.red),
-              ),
-            );
-          }
-
-          if (transactionProvider.transactions.isEmpty) {
-            return const Center(
-              child: Text('Belum ada transaksi'),
-            );
-          }
-
-          return ListView.builder(
-            itemCount: transactionProvider.transactions.length,
-            itemBuilder: (context, index) {
-              final transaction = transactionProvider.transactions[index];
-              return Dismissible(
-                key: Key(transaction.id.toString()),
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 16),
-                  child: const Icon(
-                    Icons.delete,
-                    color: Colors.white,
-                  ),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Cari transaksi...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                direction: DismissDirection.endToStart,
-                confirmDismiss: (direction) async {
-                  return await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Hapus Transaksi'),
-                          content: const Text(
-                              'Apakah Anda yakin ingin menghapus transaksi ini?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Batal'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red),
-                              child: const Text('Hapus'),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            _searchController.clear();
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: Consumer2<TransactionProvider, CategoryProvider>(
+              builder: (context, transactionProvider, categoryProvider, _) {
+                if (transactionProvider.isLoading ||
+                    categoryProvider.isLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (transactionProvider.error != null) {
+                  return Center(
+                    child: Text(
+                      'Error: ${transactionProvider.error}',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  );
+                }
+
+                final filteredTransactions = _filterTransactions(
+                  transactionProvider.transactions,
+                  categoryProvider,
+                );
+
+                if (filteredTransactions.isEmpty) {
+                  return Center(
+                    child: Text(
+                      _searchQuery.isEmpty
+                          ? 'Belum ada transaksi'
+                          : 'Tidak ada transaksi yang ditemukan',
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: filteredTransactions.length,
+                  itemBuilder: (context, index) {
+                    final transaction = filteredTransactions[index];
+                    return Dismissible(
+                      key: Key(transaction.id.toString()),
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 16),
+                        child: const Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                        ),
+                      ),
+                      direction: DismissDirection.endToStart,
+                      confirmDismiss: (direction) async {
+                        return await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Hapus Transaksi'),
+                                content: const Text(
+                                    'Apakah Anda yakin ingin menghapus transaksi ini?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('Batal'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red),
+                                    child: const Text('Hapus'),
+                                  ),
+                                ],
+                              ),
+                            ) ??
+                            false;
+                      },
+                      onDismissed: (direction) async {
+                        try {
+                          await transactionProvider
+                              .deleteTransaction(transaction.id);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Transaksi berhasil dihapus'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Gagal menghapus transaksi: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                      child: ListTile(
+                        leading: Icon(
+                          transaction.type == 'income'
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          color: transaction.type == 'income'
+                              ? Colors.green
+                              : Colors.red,
+                        ),
+                        title: Text(categoryProvider
+                            .getCategoryName(transaction.categoryId)),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(transaction.description),
+                            const SizedBox(height: 4),
+                            Text(
+                              DateFormat('dd MMMM yyyy', 'id_ID')
+                                  .format(transaction.date),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
                             ),
                           ],
                         ),
-                      ) ??
-                      false;
-                },
-                onDismissed: (direction) async {
-                  try {
-                    await transactionProvider.deleteTransaction(transaction.id);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Transaksi berhasil dihapus'),
-                          backgroundColor: Colors.green,
+                        trailing: Text(
+                          'Rp ${NumberFormat('#,###').format(transaction.amount)}',
+                          style: TextStyle(
+                            color: transaction.type == 'income'
+                                ? Colors.green
+                                : Colors.red,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Gagal menghapus transaksi: $e'),
-                          backgroundColor: Colors.red,
+                        onTap: () => _showTransactionDialog(
+                          context,
+                          transactionProvider,
+                          categoryProvider,
+                          transaction: transaction,
                         ),
-                      );
-                    }
-                  }
-                },
-                child: ListTile(
-                  leading: Icon(
-                    transaction.type == 'income'
-                        ? Icons.arrow_upward
-                        : Icons.arrow_downward,
-                    color: transaction.type == 'income'
-                        ? Colors.green
-                        : Colors.red,
-                  ),
-                  title: Text(
-                      categoryProvider.getCategoryName(transaction.categoryId)),
-                  subtitle: Text(transaction.description),
-                  trailing: Text(
-                    'Rp ${NumberFormat('#,###').format(transaction.amount)}',
-                    style: TextStyle(
-                      color: transaction.type == 'income'
-                          ? Colors.green
-                          : Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  onTap: () => _showTransactionDialog(
-                    context,
-                    transactionProvider,
-                    categoryProvider,
-                    transaction: transaction,
-                  ),
-                ),
-              );
-            },
-          );
-        },
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showTransactionDialog(
