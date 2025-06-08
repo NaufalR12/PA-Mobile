@@ -225,19 +225,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
+    ImageProvider imageProvider;
+
+    if (_selectedImagePath != null) {
+      imageProvider = FileImage(File(_selectedImagePath!));
+    } else {
+      imageProvider = CachedNetworkImageProvider(
+        '${ApiConstants.baseUrl}${ApiConstants.getProfilePhoto}?userId=$userId&t=${DateTime.now().millisecondsSinceEpoch}',
+      );
+    }
+
     return GestureDetector(
       onTap: _isEditing ? _pickImage : null,
       child: Stack(
         children: [
           CircleAvatar(
             radius: 50,
-            backgroundImage: _selectedImagePath != null
-                ? FileImage(File(_selectedImagePath!)) as ImageProvider
-                : CachedNetworkImageProvider(
-                    '${ApiConstants.baseUrl}${ApiConstants.getProfilePhoto}?userId=$userId&t=${DateTime.now().millisecondsSinceEpoch}',
-                  ),
-            onBackgroundImageError: (_, __) {},
-            child: const Icon(Icons.person, size: 50),
+            backgroundImage: imageProvider,
+            backgroundColor: Colors.grey[200],
           ),
           if (_isEditing)
             Positioned(
