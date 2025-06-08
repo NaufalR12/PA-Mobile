@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/plan_provider.dart';
 import '../providers/category_provider.dart';
+import '../providers/currency_provider.dart';
 import '../models/plan_model.dart';
 import '../models/category_model.dart';
 
@@ -93,10 +94,13 @@ class _PlanScreenState extends State<PlanScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _amountController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Jumlah',
                     border: OutlineInputBorder(),
-                    prefixText: 'Rp ',
+                    prefixText: Provider.of<CurrencyProvider>(context)
+                            .selectedCurrency
+                            .symbol +
+                        ' ',
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) {
@@ -375,15 +379,30 @@ class _PlanScreenState extends State<PlanScreen> {
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Jumlah: Rp ${plan.amount.toStringAsFixed(0)}'),
-                        Text(
-                          'Sisa: Rp ${plan.remainingAmount.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            color: plan.remainingAmount > 0
-                                ? Colors.green
-                                : Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        FutureBuilder<String>(
+                          future: Provider.of<CurrencyProvider>(context,
+                                  listen: false)
+                              .formatAmount(plan.amount),
+                          builder: (context, snapshot) {
+                            return Text(
+                                'Jumlah: ${snapshot.data ?? 'Loading...'}');
+                          },
+                        ),
+                        FutureBuilder<String>(
+                          future: Provider.of<CurrencyProvider>(context,
+                                  listen: false)
+                              .formatAmount(plan.remainingAmount),
+                          builder: (context, snapshot) {
+                            return Text(
+                              'Sisa: ${snapshot.data ?? 'Loading...'}',
+                              style: TextStyle(
+                                color: plan.remainingAmount > 0
+                                    ? Colors.green
+                                    : Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          },
                         ),
                         Text('Deskripsi: ${plan.description}'),
                         const SizedBox(height: 8),

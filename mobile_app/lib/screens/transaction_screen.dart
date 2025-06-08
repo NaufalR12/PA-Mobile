@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import '../providers/transaction_provider.dart';
 import '../providers/category_provider.dart';
+import '../providers/currency_provider.dart';
 import '../models/transaction_model.dart';
 import '../models/category_model.dart';
 
@@ -804,14 +805,32 @@ class _TransactionScreenState extends State<TransactionScreen> {
                             ),
                           ],
                         ),
-                        trailing: Text(
-                          'Rp ${NumberFormat('#,###').format(transaction.amount)}',
-                          style: TextStyle(
-                            color: transaction.type == 'income'
-                                ? Colors.green
-                                : Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        trailing: FutureBuilder<String>(
+                          future: Provider.of<CurrencyProvider>(context,
+                                  listen: false)
+                              .formatAmount(transaction.amount),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              return Text(
+                                snapshot.data!,
+                                style: TextStyle(
+                                  color: transaction.type == 'income'
+                                      ? Colors.green
+                                      : Colors.red,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              );
+                            }
+                            return Text(
+                              'Loading...',
+                              style: TextStyle(
+                                color: transaction.type == 'income'
+                                    ? Colors.green
+                                    : Colors.red,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            );
+                          },
                         ),
                         onTap: () => _showTransactionDialog(
                           context,

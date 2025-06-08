@@ -49,6 +49,11 @@ export const TransactionController = {
         categoryId,
       });
 
+      // Update remainingAmount di plan jika transaksi adalah pengeluaran
+      if (type === "expense") {
+        await PlanController.recalculateForPlanByCategory(userId, categoryId);
+      }
+
       res.status(201).json({
         status: "success",
         message: "Transaksi berhasil ditambahkan",
@@ -233,6 +238,14 @@ export const TransactionController = {
         categoryId: categoryId || transaction.categoryId,
       });
 
+      // Update remainingAmount di plan jika transaksi adalah pengeluaran
+      if (transaction.type === "expense") {
+        await PlanController.recalculateForPlanByCategory(
+          userId,
+          transaction.categoryId
+        );
+      }
+
       res.json({
         status: "success",
         message: "Transaksi berhasil diperbarui",
@@ -271,6 +284,14 @@ export const TransactionController = {
       }
 
       await transaction.destroy();
+
+      // Update remainingAmount di plan jika transaksi yang dihapus adalah pengeluaran
+      if (transaction.type === "expense") {
+        await PlanController.recalculateForPlanByCategory(
+          userId,
+          transaction.categoryId
+        );
+      }
 
       res.json({
         status: "success",

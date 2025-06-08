@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/transaction_provider.dart';
+import '../providers/currency_provider.dart';
 import '../models/transaction_model.dart';
+import '../widgets/currency_selector.dart';
 import 'login_screen.dart';
 import 'package:intl/intl.dart';
 import 'map_screen.dart';
@@ -31,6 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final transactionProvider = Provider.of<TransactionProvider>(context);
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
     final user = authProvider.user;
     final transactions = transactionProvider.transactions;
     final isLoading = transactionProvider.isLoading;
@@ -53,13 +56,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
     double saldo = totalIncome - totalExpense;
-
-    // Format currency
-    String formatCurrency(double value) {
-      final formatter =
-          NumberFormat.currency(locale: 'id', symbol: 'IDR ', decimalDigits: 0);
-      return formatter.format(value);
-    }
 
     // Widget foto profil
     Widget profilePhoto() {
@@ -90,6 +86,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
             ),
             const Spacer(),
+            const CurrencySelector(),
+            const SizedBox(width: 8),
             if (user != null) profilePhoto(),
           ],
         ),
@@ -133,12 +131,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 fontWeight: FontWeight.w600),
                           ),
                         const SizedBox(height: 8),
-                        Text(
-                          formatCurrency(saldo),
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold),
+                        FutureBuilder<String>(
+                          future: currencyProvider.formatAmount(saldo),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              return Text(
+                                snapshot.data!,
+                                style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold),
+                              );
+                            }
+                            return const Text(
+                              'Loading...',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold),
+                            );
+                          },
                         ),
                         const SizedBox(height: 4),
                         Row(
@@ -192,7 +204,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             _summaryCard(
                               icon: '🤑',
                               title: 'Income',
-                              value: formatCurrency(totalIncome),
+                              value: FutureBuilder<String>(
+                                future:
+                                    currencyProvider.formatAmount(totalIncome),
+                                builder: (context, snapshot) {
+                                  return Text(
+                                    snapshot.data ?? 'Loading...',
+                                    style: TextStyle(
+                                      color: Colors.green.shade800,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  );
+                                },
+                              ),
                               color: Colors.green.shade50,
                               textColor: Colors.green.shade800,
                             ),
@@ -200,7 +224,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             _summaryCard(
                               icon: '💸',
                               title: 'Expense',
-                              value: formatCurrency(totalExpense),
+                              value: FutureBuilder<String>(
+                                future:
+                                    currencyProvider.formatAmount(totalExpense),
+                                builder: (context, snapshot) {
+                                  return Text(
+                                    snapshot.data ?? 'Loading...',
+                                    style: TextStyle(
+                                      color: Colors.red.shade800,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  );
+                                },
+                              ),
                               color: Colors.red.shade50,
                               textColor: Colors.red.shade800,
                             ),
@@ -213,7 +249,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: _summaryCard(
                                 icon: '👜',
                                 title: 'Pockets',
-                                value: '7 Pockets',
+                                value: Text(
+                                  '7 Pockets',
+                                  style: TextStyle(
+                                    color: Colors.brown.shade800,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                                 color: Colors.brown.shade50,
                                 textColor: Colors.brown.shade800,
                               ),
@@ -231,7 +273,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 child: _summaryCard(
                                   icon: '🏦',
                                   title: 'Bank & ATM',
-                                  value: 'Terdekat',
+                                  value: Text(
+                                    'Terdekat',
+                                    style: TextStyle(
+                                      color: Colors.blue.shade800,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                                   color: Colors.blue.shade50,
                                   textColor: Colors.blue.shade800,
                                 ),
@@ -269,30 +317,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _summaryCard({
     required String icon,
     required String title,
-    required String value,
+    required Widget value,
     required Color color,
     required Color textColor,
   }) {
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: color,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(icon, style: const TextStyle(fontSize: 22)),
-            const SizedBox(height: 6),
-            Text(title, style: TextStyle(fontSize: 13, color: textColor)),
-            const SizedBox(height: 2),
-            Text(value,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                    fontSize: 15)),
+            Text(icon, style: const TextStyle(fontSize: 24)),
+            const SizedBox(height: 8),
+            Text(
+              title,
+              style: TextStyle(
+                color: textColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            value,
           ],
         ),
       ),
@@ -301,6 +350,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _transactionTile(Transaction t) {
     final isExpense = t.type == 'expense';
+    final currencyProvider = Provider.of<CurrencyProvider>(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -332,16 +382,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ],
             ),
           ),
-          Text(
-            (isExpense ? '- ' : '+ ') +
-                NumberFormat.currency(
-                        locale: 'id', symbol: 'IDR ', decimalDigits: 0)
-                    .format(t.amount),
-            style: TextStyle(
-              color: isExpense ? Colors.red : Colors.green,
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-            ),
+          FutureBuilder<String>(
+            future: currencyProvider.formatAmount(t.amount),
+            builder: (context, snapshot) {
+              return Text(
+                (isExpense ? '- ' : '+ ') + (snapshot.data ?? 'Loading...'),
+                style: TextStyle(
+                  color: isExpense ? Colors.red : Colors.green,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              );
+            },
           ),
         ],
       ),

@@ -7,6 +7,7 @@ import 'screens/home_screen.dart';
 import 'providers/transaction_provider.dart';
 import 'providers/category_provider.dart';
 import 'providers/plan_provider.dart';
+import 'providers/currency_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,6 +24,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
         ChangeNotifierProvider(create: (_) => PlanProvider()),
+        ChangeNotifierProvider(create: (_) => CurrencyProvider()),
       ],
       child: MaterialApp(
         title: 'Aplikasi Manajemen Keuangan',
