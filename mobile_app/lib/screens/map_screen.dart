@@ -30,25 +30,59 @@ class _MapScreenState extends State<MapScreen> {
     bool serviceEnabled;
     LocationPermission permission;
 
-    // Test if location services are enabled
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      return Future.error("Location services are disabled");
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return Future.error("Location permissions are denied");
+    try {
+      // Test if location services are enabled
+      serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lokasi GPS tidak aktif. Mohon aktifkan GPS Anda.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return Future.error("Location services are disabled");
       }
-    }
 
-    if (permission == LocationPermission.deniedForever) {
-      return Future.error("Location permissions are permanently denied");
-    }
+      permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  'Izin lokasi ditolak. Beberapa fitur mungkin tidak berfungsi.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+          return Future.error("Location permissions are denied");
+        }
+      }
 
-    return await Geolocator.getCurrentPosition();
+      if (permission == LocationPermission.deniedForever) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Izin lokasi ditolak secara permanen. Mohon aktifkan di pengaturan aplikasi.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return Future.error("Location permissions are permanently denied");
+      }
+
+      return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: Duration(seconds: 5),
+      );
+    } catch (e) {
+      print('Error getting location: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mendapatkan lokasi: $e'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+      rethrow;
+    }
   }
 
   // Load nearby banks and ATMs using Overpass API
@@ -109,14 +143,24 @@ class _MapScreenState extends State<MapScreen> {
   void _showCurrentLocation() async {
     try {
       Position position = await _determinePosition();
+      print('Location obtained: ${position.latitude}, ${position.longitude}');
+
       LatLng currentLatLng = LatLng(position.latitude, position.longitude);
       _mapController.move(currentLatLng, 15.0);
+
       setState(() {
         _mylocation = currentLatLng;
       });
+
       await _loadNearbyBanksAndATMs();
     } catch (e) {
-      print(e);
+      print('Error in _showCurrentLocation: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mendapatkan lokasi: $e'),
+          duration: Duration(seconds: 3),
+        ),
+      );
     }
   }
 
