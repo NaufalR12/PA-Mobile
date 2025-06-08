@@ -143,4 +143,26 @@ class AuthProvider with ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> updateProfilePhoto(String imagePath) async {
+    print('AuthProvider: Memulai update foto profil');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      print('AuthProvider: Memanggil authService.updateProfilePhoto');
+      _user = await _authService.updateProfilePhoto(imagePath);
+      print('AuthProvider: Update foto profil berhasil');
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      print('AuthProvider: Error saat update foto profil - $e');
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }

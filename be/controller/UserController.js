@@ -191,7 +191,6 @@ export const UserController = {
       if (name) updateData.name = name;
       if (gender) updateData.gender = gender;
       if (email) updateData.email = email;
-      if (req.file) updateData.foto_profil = req.file.buffer;
 
       const user = await User.findByPk(userId);
       if (!user) {
@@ -235,6 +234,54 @@ export const UserController = {
       res.status(500).json({
         status: "error",
         message: "Gagal memperbarui profil",
+      });
+    }
+  },
+
+  updateProfilePhoto: async (req, res) => {
+    try {
+      const userId = req.query.userId;
+      if (!userId) {
+        return res.status(400).json({
+          status: "error",
+          message: "User ID diperlukan",
+        });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({
+          status: "error",
+          message: "File foto profil diperlukan",
+        });
+      }
+
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({
+          status: "error",
+          message: "User tidak ditemukan",
+        });
+      }
+
+      await user.update({
+        foto_profil: req.file.buffer,
+      });
+
+      res.json({
+        status: "success",
+        message: "Foto profil berhasil diperbarui",
+        data: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          gender: user.gender,
+        },
+      });
+    } catch (error) {
+      console.error("Error in updateProfilePhoto:", error);
+      res.status(500).json({
+        status: "error",
+        message: "Gagal memperbarui foto profil",
       });
     }
   },

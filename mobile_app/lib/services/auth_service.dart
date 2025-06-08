@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../constants/api_constants.dart';
 import '../models/user_model.dart';
+import 'package:http_parser/http_parser.dart';
 
 class AuthService {
   final storage = const FlutterSecureStorage();
@@ -215,6 +216,58 @@ class AuthService {
       }
     } catch (e) {
       print('AuthService: Error saat update password - $e');
+      throw Exception('Terjadi kesalahan: $e');
+    }
+  }
+
+  Future<User> updateProfilePhoto(String imagePath) async {
+    try {
+      final userId = await getUserId();
+      if (userId == null) {
+        throw Exception('User ID tidak ditemukan');
+      }
+
+      print('AuthService: Mengupdate foto profil untuk user ID: $userId');
+
+      // Buat multipart request
+      var request = http.MultipartRequest(
+        'PUT',
+        Uri.parse(
+            '${ApiConstants.baseUrl}${ApiConstants.updateProfilePhoto}?userId=$userId'),
+      );
+
+      // Tambahkan file foto
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'foto_profil',
+          imagePath,
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
+
+      // Kirim request
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      print('AuthService: Response status code: ${response.statusCode}');
+      print('AuthService: Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          print('AuthService: Update foto profil berhasil');
+          return User.fromJson(data['data']);
+        } else {
+          print('AuthService: Update foto profil gagal - ${data['message']}');
+          throw Exception(data['message'] ?? 'Gagal mengupdate foto profil');
+        }
+      } else {
+        final error = jsonDecode(response.body);
+        print('AuthService: Update foto profil gagal - ${error['message']}');
+        throw Exception(error['message'] ?? 'Gagal mengupdate foto profil');
+      }
+    } catch (e) {
+      print('AuthService: Error saat update foto profil - $e');
       throw Exception('Terjadi kesalahan: $e');
     }
   }

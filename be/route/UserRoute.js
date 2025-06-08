@@ -22,10 +22,11 @@ router.post("/login", UserController.login);
 
 // Profile routes
 router.get("/me", UserController.getProfile);
+router.put("/profile", UserController.updateProfile);
 router.put(
-  "/profile",
+  "/profile/photo",
   upload.single("foto_profil"),
-  UserController.updateProfile
+  UserController.updateProfilePhoto
 );
 router.get("/profile/photo", UserController.getProfilePhoto);
 router.post("/logout", UserController.logout);

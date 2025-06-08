@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/auth_provider.dart';
+import '../constants/api_constants.dart';
 import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -17,6 +20,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _imagePicker = ImagePicker();
   String _selectedGender = 'male';
   bool _isEditing = false;
   bool _isPasswordVisible = false;
@@ -163,6 +167,91 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _pickImage() async {
+    try {
+      final pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+      );
+
+      if (pickedFile != null) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final success = await authProvider.updateProfilePhoto(pickedFile.path);
+
+        if (success && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Foto profil berhasil diperbarui'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content:
+                  Text(authProvider.error ?? 'Gagal memperbarui foto profil'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memilih foto: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildProfileImage() {
+    final user = Provider.of<AuthProvider>(context).user;
+    final userId = user?.id.toString();
+
+    if (userId == null) {
+      return const CircleAvatar(
+        radius: 50,
+        child: Icon(Icons.person, size: 50),
+      );
+    }
+
+    return GestureDetector(
+      onTap: _isEditing ? _pickImage : null,
+      child: Stack(
+        children: [
+          CircleAvatar(
+            radius: 50,
+            backgroundImage: CachedNetworkImageProvider(
+              '${ApiConstants.baseUrl}${ApiConstants.getProfilePhoto}?userId=$userId',
+            ),
+            onBackgroundImageError: (_, __) {},
+            child: const Icon(Icons.person, size: 50),
+          ),
+          if (_isEditing)
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.camera_alt,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -188,10 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const CircleAvatar(
-                        radius: 50,
-                        child: Icon(Icons.person, size: 50),
-                      ),
+                      Center(child: _buildProfileImage()),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _nameController,
@@ -409,10 +495,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             : Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const CircleAvatar(
-                    radius: 50,
-                    child: Icon(Icons.person, size: 50),
-                  ),
+                  Center(child: _buildProfileImage()),
                   const SizedBox(height: 16),
                   Text(
                     'Nama: ${user?.name ?? 'Loading...'}',
