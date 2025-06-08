@@ -73,7 +73,6 @@ class _CategoryScreenState extends State<CategoryScreen> {
                     id: category.id,
                     name: nameController.text,
                     userId: category.userId,
-                    createdAt: category.createdAt,
                   ),
                 );
               }

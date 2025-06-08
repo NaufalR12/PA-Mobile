@@ -52,10 +52,18 @@ class CategoryService {
   Future<bool> createCategory(String name) async {
     try {
       final userId = await _getUserId();
+      print('Creating category for user: $userId');
+
+      final body = {'name': name};
+      print('Request body: $body');
+
+      final url = '$baseUrl/category?userId=$userId';
+      print('Request URL: $url');
+
       final response = await http.post(
-        Uri.parse('$baseUrl/category'),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'name': name, 'userId': userId}),
+        body: json.encode(body),
       );
 
       print('Create Category Response: ${response.body}');
@@ -74,10 +82,19 @@ class CategoryService {
   Future<bool> updateCategory(Category category) async {
     try {
       final userId = await _getUserId();
+      print('Updating category for user: $userId');
+      print('Category to update: ${category.toJson()}');
+
+      final body = {'name': category.name};
+      print('Request body: $body');
+
+      final url = '$baseUrl/category/${category.id}?userId=$userId';
+      print('Request URL: $url');
+
       final response = await http.put(
-        Uri.parse('$baseUrl/category/${category.id}'),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
-        body: json.encode({'name': category.name, 'userId': userId}),
+        body: json.encode(body),
       );
 
       print('Update Category Response: ${response.body}');
@@ -96,8 +113,13 @@ class CategoryService {
   Future<bool> deleteCategory(int id) async {
     try {
       final userId = await _getUserId();
+      print('Deleting category for user: $userId');
+
+      final url = '$baseUrl/category/$id?userId=$userId';
+      print('Request URL: $url');
+
       final response = await http.delete(
-        Uri.parse('$baseUrl/category/$id?userId=$userId'),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
       );
 
