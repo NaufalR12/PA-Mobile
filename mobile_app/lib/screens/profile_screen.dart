@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/auth_provider.dart';
 import '../constants/api_constants.dart';
 import 'login_screen.dart';
+import 'dart:io';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -27,6 +28,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isNewPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isChangingPassword = false;
+  String? _selectedImagePath;
 
   @override
   void dispose() {
@@ -51,6 +53,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _currentPasswordController.clear();
       _newPasswordController.clear();
       _confirmPasswordController.clear();
+      _selectedImagePath = null;
     });
   }
 
@@ -61,6 +64,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _currentPasswordController.clear();
       _newPasswordController.clear();
       _confirmPasswordController.clear();
+      _selectedImagePath = null;
     });
   }
 
@@ -83,17 +87,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final emailSuccess =
             await authProvider.updateEmail(_emailController.text);
 
-        if (emailSuccess && mounted) {
-          print('ProfileScreen: Update email berhasil, menampilkan snackbar');
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Profil berhasil diperbarui'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          setState(() {
-            _isEditing = false;
-          });
+        if (emailSuccess) {
+          // Update foto profil jika ada foto baru yang dipilih
+          if (_selectedImagePath != null) {
+            final photoSuccess =
+                await authProvider.updateProfilePhoto(_selectedImagePath!);
+            if (!photoSuccess && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                      authProvider.error ?? 'Gagal memperbarui foto profil'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+          }
+
+          if (mounted) {
+            print('ProfileScreen: Update email berhasil, menampilkan snackbar');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Profil berhasil diperbarui'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            setState(() {
+              _isEditing = false;
+              _selectedImagePath = null;
+            });
+          }
         } else if (mounted) {
           print('ProfileScreen: Update email gagal - ${authProvider.error}');
           ScaffoldMessenger.of(context).showSnackBar(
@@ -175,25 +198,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
 
       if (pickedFile != null) {
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        final success = await authProvider.updateProfilePhoto(pickedFile.path);
-
-        if (success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Foto profil berhasil diperbarui'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        } else if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content:
-                  Text(authProvider.error ?? 'Gagal memperbarui foto profil'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+        setState(() {
+          _selectedImagePath = pickedFile.path;
+        });
       }
     } catch (e) {
       if (mounted) {
@@ -224,9 +231,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           CircleAvatar(
             radius: 50,
-            backgroundImage: CachedNetworkImageProvider(
-              '${ApiConstants.baseUrl}${ApiConstants.getProfilePhoto}?userId=$userId',
-            ),
+            backgroundImage: _selectedImagePath != null
+                ? FileImage(File(_selectedImagePath!)) as ImageProvider
+                : CachedNetworkImageProvider(
+                    '${ApiConstants.baseUrl}${ApiConstants.getProfilePhoto}?userId=$userId&t=${DateTime.now().millisecondsSinceEpoch}',
+                  ),
             onBackgroundImageError: (_, __) {},
             child: const Icon(Icons.person, size: 50),
           ),

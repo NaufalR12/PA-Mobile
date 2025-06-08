@@ -152,8 +152,22 @@ class AuthProvider with ChangeNotifier {
 
     try {
       print('AuthProvider: Memanggil authService.updateProfilePhoto');
-      _user = await _authService.updateProfilePhoto(imagePath);
+      final updatedUser = await _authService.updateProfilePhoto(imagePath);
       print('AuthProvider: Update foto profil berhasil');
+
+      // Update user state dengan data terbaru
+      if (_user != null) {
+        _user = User(
+          id: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+          gender: updatedUser.gender,
+          fotoProfil: updatedUser.fotoProfil,
+          createdAt: updatedUser.createdAt,
+          updatedAt: updatedUser.updatedAt,
+        );
+      }
+
       _isLoading = false;
       notifyListeners();
       return true;
