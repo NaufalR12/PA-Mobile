@@ -48,18 +48,38 @@ export const PlanController = {
         });
       }
 
+      // Hitung total pengeluaran untuk kategori ini
+      const transactions = await Transaction.findAll({
+        where: {
+          userId,
+          categoryId,
+          type: "expense",
+        },
+        attributes: ["amount"],
+      });
+
+      const totalExpenses = transactions.reduce(
+        (sum, t) => sum + parseFloat(t.amount),
+        0
+      );
+
+      const remainingAmount = amount - totalExpenses;
+
       const plan = await Plan.create({
         categoryId,
         userId,
         amount,
-        remainingAmount: amount,
+        remainingAmount: Math.max(0, remainingAmount),
         description,
       });
 
       res.status(201).json({
         status: "success",
         message: "Rencana berhasil ditambahkan",
-        data: plan,
+        data: {
+          ...plan.toJSON(),
+          categoryName: category.name,
+        },
       });
     } catch (error) {
       console.error("Error in create plan:", error);
@@ -91,9 +111,29 @@ export const PlanController = {
         order: [["createdAt", "DESC"]],
       });
 
+      // Recalculate remaining amount for each plan
+      for (const plan of plans) {
+        await PlanController.recalculateForPlanByCategory(
+          userId,
+          plan.categoryId
+        );
+      }
+
+      // Fetch updated plans after recalculation
+      const updatedPlans = await Plan.findAll({
+        where: { userId },
+        include: [
+          {
+            model: Category,
+            attributes: ["id", "name"],
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+      });
+
       res.json({
         status: "success",
-        data: plans,
+        data: updatedPlans,
       });
     } catch (error) {
       console.error("Error in get plans:", error);
@@ -133,9 +173,26 @@ export const PlanController = {
         });
       }
 
+      // Recalculate remaining amount before sending response
+      await PlanController.recalculateForPlanByCategory(
+        userId,
+        plan.categoryId
+      );
+
+      // Fetch updated plan after recalculation
+      const updatedPlan = await Plan.findOne({
+        where: { id, userId },
+        include: [
+          {
+            model: Category,
+            attributes: ["id", "name"],
+          },
+        ],
+      });
+
       res.json({
         status: "success",
-        data: plan,
+        data: updatedPlan,
       });
     } catch (error) {
       console.error("Error in get plan:", error);
@@ -170,20 +227,28 @@ export const PlanController = {
         });
       }
 
-      // Hitung selisih amount untuk menyesuaikan remainingAmount
-      const amountDiff = amount - plan.amount;
-      const newRemainingAmount = plan.remainingAmount + amountDiff;
-
+      // Update plan's amount and other fields first
       await plan.update({
         amount,
-        remainingAmount: newRemainingAmount,
         description: description || plan.description,
+      });
+
+      // Recalculate remainingAmount based on actual expenses
+      await PlanController.recalculateForPlanByCategory(
+        userId,
+        plan.categoryId
+      );
+
+      // Fetch the updated plan
+      const updatedPlan = await Plan.findOne({
+        where: { id, userId },
+        include: [{ model: Category, attributes: ["id", "name"] }],
       });
 
       res.json({
         status: "success",
         message: "Rencana berhasil diperbarui",
-        data: plan,
+        data: updatedPlan,
       });
     } catch (error) {
       console.error("Error in update plan:", error);
@@ -264,7 +329,6 @@ export const PlanController = {
       });
 
       if (!plan) {
-        // console.log(`No plan found for userId: ${userId}, categoryId: ${categoryId}. Skipping recalculation.`);
         return;
       }
 
@@ -294,7 +358,6 @@ export const PlanController = {
         `Error recalculating remaining amount for category ${categoryId}, user ${userId}:`,
         error
       );
-      // Tidak melempar error agar tidak mengganggu operasi utama (create/update/delete transaction)
     }
   },
 };
