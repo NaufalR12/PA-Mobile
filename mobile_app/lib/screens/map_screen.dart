@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/services.dart'; // Untuk Clipboard
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'marker_data.dart';
 import 'package:http/http.dart' as http;
 
@@ -17,13 +19,17 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
-
   List<Marker> _markers = [];
+  List<Polyline> _polylines = [];
   LatLng? _mylocation;
+  LatLng? _selectedLocation;
   TextEditingController _searchController = TextEditingController();
   List<dynamic> _searchResults = [];
   bool _isSearching = false;
   Timer? _debounce;
+  String? _selectedLocationName;
+  String? _distance;
+  String? _duration;
 
   // get current location
   Future<Position> _determinePosition() async {
@@ -89,6 +95,11 @@ class _MapScreenState extends State<MapScreen> {
   Future<void> _loadNearbyBanksAndATMs() async {
     if (_mylocation == null) return;
 
+    setState(() {
+      _distance = null;
+      _duration = null;
+    });
+
     final query = '''
     [out:json];
     (
@@ -117,19 +128,29 @@ class _MapScreenState extends State<MapScreen> {
             point: LatLng(lat, lon),
             width: 80,
             height: 80,
-            child: Column(
-              children: [
-                Icon(
-                  type == 'bank' ? Icons.account_balance : Icons.atm,
-                  color: type == 'bank' ? Colors.blueAccent : Colors.green,
-                  size: 30,
-                ),
-                Text(
-                  name,
-                  style: TextStyle(fontSize: 12),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedLocation = LatLng(lat, lon);
+                  _selectedLocationName = name;
+                });
+                _getRoute(LatLng(lat, lon));
+                _showLocationDetails(name, type);
+              },
+              child: Column(
+                children: [
+                  Icon(
+                    type == 'bank' ? Icons.account_balance : Icons.atm,
+                    color: type == 'bank' ? Colors.blueAccent : Colors.green,
+                    size: 30,
+                  ),
+                  Text(
+                    name,
+                    style: TextStyle(fontSize: 12),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           );
         }).toList();
@@ -217,6 +238,195 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
+  // Fungsi untuk mendapatkan rute
+  Future<void> _getRoute(LatLng destination) async {
+    if (_mylocation == null) return;
+
+    try {
+      // Menggunakan OSRM (Open Source Routing Machine)
+      final url = Uri.parse(
+          'http://router.project-osrm.org/route/v1/driving/${_mylocation!.longitude},${_mylocation!.latitude};${destination.longitude},${destination.latitude}?overview=full&geometries=geojson');
+
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['code'] == 'Ok') {
+          final List<dynamic> coordinates =
+              data['routes'][0]['geometry']['coordinates'];
+          final List<LatLng> polylineCoordinates = coordinates
+              .map((coord) => LatLng(coord[1].toDouble(), coord[0].toDouble()))
+              .toList();
+
+          // Mendapatkan jarak dan durasi
+          final double distanceInMeters = data['routes'][0]['distance'];
+          final double durationInSeconds = data['routes'][0]['duration'];
+
+          // Konversi ke format yang lebih mudah dibaca
+          String formattedDistance;
+          if (distanceInMeters >= 1000) {
+            formattedDistance =
+                '${(distanceInMeters / 1000).toStringAsFixed(1)} km';
+          } else {
+            formattedDistance = '${distanceInMeters.toStringAsFixed(0)} m';
+          }
+
+          String formattedDuration;
+          if (durationInSeconds >= 3600) {
+            final hours = (durationInSeconds / 3600).floor();
+            final minutes = ((durationInSeconds % 3600) / 60).floor();
+            formattedDuration =
+                '$hours jam ${minutes > 0 ? '$minutes menit' : ''}';
+          } else {
+            final minutes = (durationInSeconds / 60).floor();
+            formattedDuration = '$minutes menit';
+          }
+
+          setState(() {
+            _distance = formattedDistance;
+            _duration = formattedDuration;
+            _polylines = [
+              Polyline(
+                points: polylineCoordinates,
+                color: Colors.blue,
+                strokeWidth: 5,
+              ),
+            ];
+          });
+        }
+      }
+    } catch (e) {
+      print('Error getting route: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mendapatkan rute: $e'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  // Fungsi untuk membuka aplikasi maps
+  Future<void> _openMaps(LatLng destination) async {
+    try {
+      // Mencoba membuka dengan Google Maps menggunakan geo: URI
+      final googleMapsUrl =
+          'geo:${destination.latitude},${destination.longitude}?q=${destination.latitude},${destination.longitude}';
+
+      // Alternatif dengan Google Maps web
+      final googleMapsWebUrl =
+          'https://www.google.com/maps/search/?api=1&query=${destination.latitude},${destination.longitude}';
+
+      // Alternatif dengan OpenStreetMap
+      final osmUrl =
+          'https://www.openstreetmap.org/?mlat=${destination.latitude}&mlon=${destination.longitude}#map=15/${destination.latitude}/${destination.longitude}';
+
+      // Coba buka dengan geo: URI terlebih dahulu
+      if (await canLaunchUrl(Uri.parse(googleMapsUrl))) {
+        await launchUrl(
+          Uri.parse(googleMapsUrl),
+          mode: LaunchMode.externalApplication,
+        );
+      }
+      // Jika tidak berhasil, coba buka Google Maps web
+      else if (await canLaunchUrl(Uri.parse(googleMapsWebUrl))) {
+        await launchUrl(
+          Uri.parse(googleMapsWebUrl),
+          mode: LaunchMode.externalApplication,
+        );
+      }
+      // Jika masih tidak berhasil, coba buka OpenStreetMap
+      else if (await canLaunchUrl(Uri.parse(osmUrl))) {
+        await launchUrl(
+          Uri.parse(osmUrl),
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Tidak dapat membuka aplikasi maps. Pastikan Anda memiliki aplikasi maps yang terinstall.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error opening maps: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal membuka aplikasi maps: $e'),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  // Fungsi untuk menampilkan detail lokasi
+  void _showLocationDetails(String name, String type) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              name,
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text('Tipe: ${type == 'bank' ? 'Bank' : 'ATM'}'),
+            if (_distance != null && _duration != null) ...[
+              SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Column(
+                    children: [
+                      Icon(Icons.directions_walk, color: Colors.blue),
+                      SizedBox(height: 4),
+                      Text(
+                        _distance!,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text('Jarak'),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      Icon(Icons.timer, color: Colors.orange),
+                      SizedBox(height: 4),
+                      Text(
+                        _duration!,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text('Waktu Tempuh'),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+            SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () {
+                if (_selectedLocation != null) {
+                  _openMaps(_selectedLocation!);
+                }
+              },
+              icon: Icon(Icons.directions),
+              label: Text('Buka di Maps'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -248,6 +458,7 @@ class _MapScreenState extends State<MapScreen> {
                 urlTemplate:
                     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
               ),
+              PolylineLayer(polylines: _polylines),
               MarkerLayer(markers: _markers),
               if (_mylocation != null)
                 MarkerLayer(
