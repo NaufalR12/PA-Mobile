@@ -185,11 +185,12 @@ export const UserController = {
         });
       }
 
-      const { name, gender } = req.body;
+      const { name, gender, email, currentPassword, newPassword } = req.body;
       const updateData = {};
 
       if (name) updateData.name = name;
       if (gender) updateData.gender = gender;
+      if (email) updateData.email = email;
       if (req.file) updateData.foto_profil = req.file.buffer;
 
       const user = await User.findByPk(userId);
@@ -198,6 +199,23 @@ export const UserController = {
           status: "error",
           message: "User tidak ditemukan",
         });
+      }
+
+      // Jika ada update password
+      if (currentPassword && newPassword) {
+        // Verifikasi password lama
+        const match = await bcrypt.compare(currentPassword, user.password);
+        if (!match) {
+          return res.status(400).json({
+            status: "error",
+            message: "Password saat ini tidak sesuai",
+          });
+        }
+
+        // Hash password baru
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        updateData.password = hashedPassword;
       }
 
       await user.update(updateData);

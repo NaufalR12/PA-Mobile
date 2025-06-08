@@ -89,4 +89,133 @@ class AuthService {
     final userId = await storage.read(key: 'user_id');
     return userId != null;
   }
+
+  Future<User> updateProfile(String name, String gender) async {
+    try {
+      final userId = await getUserId();
+      if (userId == null) {
+        throw Exception('User ID tidak ditemukan');
+      }
+
+      print('AuthService: Mengupdate profil untuk user ID: $userId');
+      print(
+          'AuthService: Data yang akan diupdate - name: $name, gender: $gender');
+
+      final response = await http.put(
+        Uri.parse(
+            '${ApiConstants.baseUrl}${ApiConstants.updateProfile}?userId=$userId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'gender': gender,
+        }),
+      );
+
+      print('AuthService: Response status code: ${response.statusCode}');
+      print('AuthService: Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          print('AuthService: Update profil berhasil');
+          return User.fromJson(data['data']);
+        } else {
+          print('AuthService: Update profil gagal - ${data['message']}');
+          throw Exception(data['message'] ?? 'Gagal mengupdate profil');
+        }
+      } else {
+        final error = jsonDecode(response.body);
+        print('AuthService: Update profil gagal - ${error['message']}');
+        throw Exception(error['message'] ?? 'Gagal mengupdate profil');
+      }
+    } catch (e) {
+      print('AuthService: Error saat update profil - $e');
+      throw Exception('Terjadi kesalahan: $e');
+    }
+  }
+
+  Future<User> updateEmail(String email) async {
+    try {
+      final userId = await getUserId();
+      if (userId == null) {
+        throw Exception('User ID tidak ditemukan');
+      }
+
+      print('AuthService: Mengupdate email untuk user ID: $userId');
+      print('AuthService: Email baru: $email');
+
+      final response = await http.put(
+        Uri.parse(
+            '${ApiConstants.baseUrl}${ApiConstants.updateProfile}?userId=$userId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+        }),
+      );
+
+      print('AuthService: Response status code: ${response.statusCode}');
+      print('AuthService: Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          print('AuthService: Update email berhasil');
+          return User.fromJson(data['data']);
+        } else {
+          print('AuthService: Update email gagal - ${data['message']}');
+          throw Exception(data['message'] ?? 'Gagal mengupdate email');
+        }
+      } else {
+        final error = jsonDecode(response.body);
+        print('AuthService: Update email gagal - ${error['message']}');
+        throw Exception(error['message'] ?? 'Gagal mengupdate email');
+      }
+    } catch (e) {
+      print('AuthService: Error saat update email - $e');
+      throw Exception('Terjadi kesalahan: $e');
+    }
+  }
+
+  Future<User> updatePassword(
+      String currentPassword, String newPassword) async {
+    try {
+      final userId = await getUserId();
+      if (userId == null) {
+        throw Exception('User ID tidak ditemukan');
+      }
+
+      print('AuthService: Mengupdate password untuk user ID: $userId');
+
+      final response = await http.put(
+        Uri.parse(
+            '${ApiConstants.baseUrl}${ApiConstants.updateProfile}?userId=$userId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        }),
+      );
+
+      print('AuthService: Response status code: ${response.statusCode}');
+      print('AuthService: Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          print('AuthService: Update password berhasil');
+          return User.fromJson(data['data']);
+        } else {
+          print('AuthService: Update password gagal - ${data['message']}');
+          throw Exception(data['message'] ?? 'Gagal mengupdate password');
+        }
+      } else {
+        final error = jsonDecode(response.body);
+        print('AuthService: Update password gagal - ${error['message']}');
+        throw Exception(error['message'] ?? 'Gagal mengupdate password');
+      }
+    } catch (e) {
+      print('AuthService: Error saat update password - $e');
+      throw Exception('Terjadi kesalahan: $e');
+    }
+  }
 }

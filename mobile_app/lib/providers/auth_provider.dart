@@ -74,4 +74,73 @@ class AuthProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
   }
+
+  Future<bool> updateProfile(String name, String gender) async {
+    print('AuthProvider: Memulai update profil');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      print('AuthProvider: Memanggil authService.updateProfile');
+      _user = await _authService.updateProfile(name, gender);
+      print(
+          'AuthProvider: Update profil berhasil, user baru: ${_user?.toJson()}');
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      print('AuthProvider: Error saat update profil - $e');
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updateEmail(String email) async {
+    print('AuthProvider: Memulai update email');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      print('AuthProvider: Memanggil authService.updateEmail');
+      _user = await _authService.updateEmail(email);
+      print(
+          'AuthProvider: Update email berhasil, user baru: ${_user?.toJson()}');
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      print('AuthProvider: Error saat update email - $e');
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> updatePassword(
+      String currentPassword, String newPassword) async {
+    print('AuthProvider: Memulai update password');
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      print('AuthProvider: Memanggil authService.updatePassword');
+      _user = await _authService.updatePassword(currentPassword, newPassword);
+      print('AuthProvider: Update password berhasil');
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      print('AuthProvider: Error saat update password - $e');
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }
