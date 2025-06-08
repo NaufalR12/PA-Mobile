@@ -17,6 +17,9 @@ class TransactionScreen extends StatefulWidget {
 class _TransactionScreenState extends State<TransactionScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  String _selectedFilter = 'all'; // 'all', 'income', 'expense'
+  String _selectedDateFilter = 'all'; // 'all', 'day', 'month', 'year'
+  DateTime? _selectedDate;
 
   @override
   void initState() {
@@ -38,22 +41,52 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
   List<Transaction> _filterTransactions(
       List<Transaction> transactions, CategoryProvider categoryProvider) {
-    if (_searchQuery.isEmpty) {
-      return transactions;
+    var filteredTransactions = transactions;
+
+    // Filter berdasarkan tipe transaksi
+    if (_selectedFilter != 'all') {
+      filteredTransactions = filteredTransactions
+          .where((transaction) => transaction.type == _selectedFilter)
+          .toList();
     }
 
-    return transactions.where((transaction) {
-      final categoryName = categoryProvider
-          .getCategoryName(transaction.categoryId)
-          .toLowerCase();
-      final description = transaction.description.toLowerCase();
-      final amount = transaction.amount.toString();
-      final searchLower = _searchQuery.toLowerCase();
+    // Filter berdasarkan tanggal
+    if (_selectedDate != null && _selectedDateFilter != 'all') {
+      filteredTransactions = filteredTransactions.where((transaction) {
+        final transactionDate = transaction.date;
+        switch (_selectedDateFilter) {
+          case 'day':
+            return transactionDate.year == _selectedDate!.year &&
+                transactionDate.month == _selectedDate!.month &&
+                transactionDate.day == _selectedDate!.day;
+          case 'month':
+            return transactionDate.year == _selectedDate!.year &&
+                transactionDate.month == _selectedDate!.month;
+          case 'year':
+            return transactionDate.year == _selectedDate!.year;
+          default:
+            return true;
+        }
+      }).toList();
+    }
 
-      return categoryName.contains(searchLower) ||
-          description.contains(searchLower) ||
-          amount.contains(searchLower);
-    }).toList();
+    // Filter berdasarkan pencarian
+    if (_searchQuery.isNotEmpty) {
+      filteredTransactions = filteredTransactions.where((transaction) {
+        final categoryName = categoryProvider
+            .getCategoryName(transaction.categoryId)
+            .toLowerCase();
+        final description = transaction.description.toLowerCase();
+        final amount = transaction.amount.toString();
+        final searchLower = _searchQuery.toLowerCase();
+
+        return categoryName.contains(searchLower) ||
+            description.contains(searchLower) ||
+            amount.contains(searchLower);
+      }).toList();
+    }
+
+    return filteredTransactions;
   }
 
   void _showTransactionDialog(
@@ -233,11 +266,343 @@ class _TransactionScreenState extends State<TransactionScreen> {
     );
   }
 
+  void _showFilterDialog() {
+    final now = DateTime.now();
+    final currentYear = now.year;
+    final currentMonth = now.month;
+    final currentDay = now.day;
+
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Filter Transaksi'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Tipe Transaksi'),
+                RadioListTile<String>(
+                  title: const Text('Semua'),
+                  value: 'all',
+                  groupValue: _selectedFilter,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedFilter = value!;
+                    });
+                  },
+                ),
+                RadioListTile<String>(
+                  title: const Text('Pemasukan'),
+                  value: 'income',
+                  groupValue: _selectedFilter,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedFilter = value!;
+                    });
+                  },
+                ),
+                RadioListTile<String>(
+                  title: const Text('Pengeluaran'),
+                  value: 'expense',
+                  groupValue: _selectedFilter,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedFilter = value!;
+                    });
+                  },
+                ),
+                const Divider(),
+                const Text('Filter Tanggal'),
+                RadioListTile<String>(
+                  title: const Text('Semua'),
+                  value: 'all',
+                  groupValue: _selectedDateFilter,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedDateFilter = value!;
+                      _selectedDate = null;
+                    });
+                  },
+                ),
+                RadioListTile<String>(
+                  title: const Text('Hari'),
+                  value: 'day',
+                  groupValue: _selectedDateFilter,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedDateFilter = value!;
+                      _selectedDate = DateTime.now();
+                    });
+                  },
+                ),
+                RadioListTile<String>(
+                  title: const Text('Bulan'),
+                  value: 'month',
+                  groupValue: _selectedDateFilter,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedDateFilter = value!;
+                      _selectedDate = DateTime.now();
+                    });
+                  },
+                ),
+                RadioListTile<String>(
+                  title: const Text('Tahun'),
+                  value: 'year',
+                  groupValue: _selectedDateFilter,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedDateFilter = value!;
+                      _selectedDate = DateTime.now();
+                    });
+                  },
+                ),
+                if (_selectedDateFilter != 'all')
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (_selectedDateFilter == 'day')
+                          ListTile(
+                            title: const Text('Pilih Tanggal'),
+                            subtitle: Text(
+                              _selectedDate != null
+                                  ? DateFormat('dd MMMM yyyy', 'id_ID')
+                                      .format(_selectedDate!)
+                                  : 'Belum dipilih',
+                            ),
+                            trailing: const Icon(Icons.calendar_today),
+                            onTap: () async {
+                              final date = await showDatePicker(
+                                context: context,
+                                initialDate: _selectedDate ?? DateTime.now(),
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime(
+                                    currentYear, currentMonth, currentDay),
+                              );
+                              if (date != null) {
+                                setState(() {
+                                  _selectedDate = date;
+                                });
+                              }
+                            },
+                          )
+                        else if (_selectedDateFilter == 'month')
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Pilih Bulan'),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: DropdownButtonFormField<int>(
+                                      value:
+                                          _selectedDate?.month ?? currentMonth,
+                                      decoration: const InputDecoration(
+                                        border: OutlineInputBorder(),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 10),
+                                      ),
+                                      items: List.generate(12, (index) {
+                                        final month = index + 1;
+                                        // Jika tahun yang dipilih adalah tahun ini, batasi bulan yang bisa dipilih
+                                        if (_selectedDate?.year ==
+                                                currentYear &&
+                                            month > currentMonth) {
+                                          return DropdownMenuItem(
+                                            value: month,
+                                            child: Text(DateFormat(
+                                                    'MMMM', 'id_ID')
+                                                .format(DateTime(2024, month))),
+                                            enabled: false,
+                                          );
+                                        }
+                                        return DropdownMenuItem(
+                                          value: month,
+                                          child: Text(DateFormat(
+                                                  'MMMM', 'id_ID')
+                                              .format(DateTime(2024, month))),
+                                        );
+                                      }),
+                                      onChanged: (value) {
+                                        if (value != null) {
+                                          setState(() {
+                                            _selectedDate = DateTime(
+                                              _selectedDate?.year ??
+                                                  currentYear,
+                                              value,
+                                            );
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: DropdownButtonFormField<int>(
+                                      value: _selectedDate?.year ?? currentYear,
+                                      decoration: const InputDecoration(
+                                        border: OutlineInputBorder(),
+                                        contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 10),
+                                      ),
+                                      items: List.generate(5, (index) {
+                                        final year = currentYear - index;
+                                        return DropdownMenuItem(
+                                          value: year,
+                                          child: Text(year.toString()),
+                                        );
+                                      }),
+                                      onChanged: (value) {
+                                        if (value != null) {
+                                          setState(() {
+                                            _selectedDate = DateTime(
+                                              value,
+                                              _selectedDate?.month ??
+                                                  currentMonth,
+                                            );
+                                          });
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          )
+                        else if (_selectedDateFilter == 'year')
+                          TextFormField(
+                            initialValue:
+                                (_selectedDate?.year ?? currentYear).toString(),
+                            decoration: const InputDecoration(
+                              labelText: 'Pilih Tahun',
+                              border: OutlineInputBorder(),
+                              suffixIcon: Icon(Icons.calendar_today),
+                            ),
+                            keyboardType: TextInputType.number,
+                            onChanged: (value) {
+                              if (value.isNotEmpty) {
+                                final year = int.tryParse(value);
+                                if (year != null && year <= currentYear) {
+                                  setState(() {
+                                    _selectedDate = DateTime(year);
+                                  });
+                                }
+                              }
+                            },
+                            onTap: () {
+                              // Tampilkan dialog untuk memilih tahun
+                              showDialog(
+                                context: context,
+                                builder: (context) => StatefulBuilder(
+                                  builder: (context, setDialogState) =>
+                                      AlertDialog(
+                                    title: const Text('Pilih Tahun'),
+                                    content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            IconButton(
+                                              icon: const Icon(Icons.remove),
+                                              onPressed: () {
+                                                final currentYear =
+                                                    _selectedDate?.year ??
+                                                        DateTime.now().year;
+                                                if (currentYear > 1900) {
+                                                  setDialogState(() {
+                                                    _selectedDate = DateTime(
+                                                        currentYear - 1);
+                                                  });
+                                                }
+                                              },
+                                            ),
+                                            Text(
+                                              (_selectedDate?.year ??
+                                                      DateTime.now().year)
+                                                  .toString(),
+                                              style:
+                                                  const TextStyle(fontSize: 20),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.add),
+                                              onPressed: () {
+                                                final currentYear =
+                                                    _selectedDate?.year ??
+                                                        DateTime.now().year;
+                                                if (currentYear <
+                                                    DateTime.now().year) {
+                                                  setDialogState(() {
+                                                    _selectedDate = DateTime(
+                                                        currentYear + 1);
+                                                  });
+                                                }
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text('Batal'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          this.setState(() {});
+                                          Navigator.pop(context);
+                                        },
+                                        child: const Text('Pilih'),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                this.setState(() {});
+                Navigator.pop(context);
+              },
+              child: const Text('Terapkan'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Transaksi'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list),
+            onPressed: _showFilterDialog,
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -270,6 +635,51 @@ class _TransactionScreenState extends State<TransactionScreen> {
               },
             ),
           ),
+          if (_selectedFilter != 'all' || _selectedDateFilter != 'all')
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Row(
+                children: [
+                  Chip(
+                    label: Text(
+                      _selectedFilter == 'all'
+                          ? 'Semua'
+                          : _selectedFilter == 'income'
+                              ? 'Pemasukan'
+                              : 'Pengeluaran',
+                    ),
+                    backgroundColor: Colors.blue[100],
+                  ),
+                  const SizedBox(width: 8),
+                  if (_selectedDateFilter != 'all')
+                    Chip(
+                      label: Text(
+                        _selectedDateFilter == 'day'
+                            ? DateFormat('dd MMMM yyyy', 'id_ID')
+                                .format(_selectedDate!)
+                            : _selectedDateFilter == 'month'
+                                ? DateFormat('MMMM yyyy', 'id_ID')
+                                    .format(_selectedDate!)
+                                : DateFormat('yyyy', 'id_ID')
+                                    .format(_selectedDate!),
+                      ),
+                      backgroundColor: Colors.green[100],
+                    ),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _selectedFilter = 'all';
+                        _selectedDateFilter = 'all';
+                        _selectedDate = null;
+                      });
+                    },
+                    icon: const Icon(Icons.clear),
+                    label: const Text('Reset Filter'),
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: Consumer2<TransactionProvider, CategoryProvider>(
               builder: (context, transactionProvider, categoryProvider, _) {
@@ -295,7 +705,9 @@ class _TransactionScreenState extends State<TransactionScreen> {
                 if (filteredTransactions.isEmpty) {
                   return Center(
                     child: Text(
-                      _searchQuery.isEmpty
+                      _searchQuery.isEmpty &&
+                              _selectedFilter == 'all' &&
+                              _selectedDateFilter == 'all'
                           ? 'Belum ada transaksi'
                           : 'Tidak ada transaksi yang ditemukan',
                     ),
