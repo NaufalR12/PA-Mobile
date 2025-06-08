@@ -404,15 +404,28 @@ class _PlanScreenState extends State<PlanScreen> {
                             );
                           },
                         ),
-                        Text('Deskripsi: ${plan.description}'),
+                        if (plan.description != null &&
+                            plan.description!.isNotEmpty)
+                          Text('Deskripsi: ${plan.description}'),
                         const SizedBox(height: 8),
                         LinearProgressIndicator(
                           value: plan.amount > 0
-                              ? plan.remainingAmount / plan.amount
+                              ? (plan.amount - plan.remainingAmount) /
+                                  plan.amount
                               : 0,
                           backgroundColor: Colors.grey[200],
                           valueColor: AlwaysStoppedAnimation<Color>(
                             plan.remainingAmount > 0
+                                ? Colors.green
+                                : Colors.red,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Penggunaan: ${((plan.amount - plan.remainingAmount) / plan.amount * 100).toStringAsFixed(1)}%',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: plan.remainingAmount > 0
                                 ? Colors.green
                                 : Colors.red,
                           ),
