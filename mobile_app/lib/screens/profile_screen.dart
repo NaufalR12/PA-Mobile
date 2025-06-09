@@ -222,10 +222,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Profil'),
         backgroundColor: const Color(0xFF3383E2),
-        foregroundColor: Colors.white,
         elevation: 0,
+        title: Align(
+          alignment: Alignment.centerLeft,
+          child: const Text(
+            'Profil Pengguna',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: () async {
+              final authProvider =
+                  Provider.of<AuthProvider>(context, listen: false);
+              await authProvider.logout();
+              if (context.mounted) {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -248,7 +268,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     user?.name ?? 'Pengguna',
                     style: const TextStyle(
                       fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
@@ -257,6 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     user?.email ?? '',
                     style: const TextStyle(
                       fontSize: 16,
+                      fontWeight: FontWeight.w400,
                       color: Colors.white70,
                     ),
                   ),
@@ -322,28 +343,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
-                      ElevatedButton.icon(
-                        onPressed: () async {
-                          final authProvider =
-                              Provider.of<AuthProvider>(context, listen: false);
-                          await authProvider.logout();
-                          if (context.mounted) {
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                  builder: (context) => const LoginScreen()),
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.logout),
-                        label: const Text('Logout'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red[400],
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          minimumSize: const Size(double.infinity, 45),
-                        ),
-                      ),
                     ] else if (_isEditing) ...[
                       _buildEditForm(),
                     ] else if (_isChangingPassword) ...[
@@ -381,7 +380,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title,
               style: const TextStyle(
                 fontSize: 18,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
                 color: Color(0xFF3383E2),
               ),
             ),
@@ -408,6 +407,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label,
                   style: TextStyle(
                     fontSize: 14,
+                    fontWeight: FontWeight.w400,
                     color: Colors.grey[600],
                   ),
                 ),
