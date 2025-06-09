@@ -82,28 +82,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF3383E2),
         elevation: 0,
-        title: Row(
-          children: [
-            const Text(
-              'Montrack',
-              style:
-                  TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            const Spacer(),
-            const CurrencySelector(),
-            const SizedBox(width: 8),
-            const TimeZoneSelector(),
-          ],
+        title: Align(
+          alignment: Alignment.centerLeft,
+          child: const Text(
+            'Montrack',
+            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+          ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () async {
-              await authProvider.logout();
-              if (context.mounted) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+          PopupMenuButton<int>(
+            icon: const Icon(Icons.settings, color: Colors.white),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 1,
+                child: Row(
+                  children: const [
+                    Icon(Icons.currency_exchange, size: 20),
+                    SizedBox(width: 8),
+                    Text('Konversi Mata Uang'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 2,
+                child: Row(
+                  children: const [
+                    Icon(Icons.access_time, size: 20),
+                    SizedBox(width: 8),
+                    Text('Konversi Zona Waktu'),
+                  ],
+                ),
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                value: 3,
+                child: Row(
+                  children: const [
+                    Icon(Icons.logout, size: 20, color: Colors.red),
+                    SizedBox(width: 8),
+                    Text('Logout', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+            onSelected: (value) async {
+              if (value == 1) {
+                showDialog(
+                  context: context,
+                  builder: (context) => const AlertDialog(
+                    title: Text('Konversi Mata Uang'),
+                    content: CurrencySelector(),
+                  ),
                 );
+              } else if (value == 2) {
+                showDialog(
+                  context: context,
+                  builder: (context) => const AlertDialog(
+                    title: Text('Konversi Zona Waktu'),
+                    content: TimeZoneSelector(),
+                  ),
+                );
+              } else if (value == 3) {
+                await authProvider.logout();
+                if (context.mounted) {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                        builder: (context) => const LoginScreen()),
+                  );
+                }
               }
             },
           ),
