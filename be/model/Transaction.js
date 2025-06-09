@@ -20,7 +20,7 @@ const Transaction = sequelize.define(
       allowNull: true,
     },
     date: {
-      type: DataTypes.DATEONLY,
+      type: DataTypes.DATE,
       allowNull: false,
     },
     type: {

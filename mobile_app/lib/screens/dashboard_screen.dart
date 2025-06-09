@@ -6,10 +6,12 @@ import '../providers/currency_provider.dart';
 import '../providers/plan_provider.dart';
 import '../models/transaction_model.dart';
 import '../widgets/currency_selector.dart';
+import '../widgets/timezone_selector.dart';
 import 'login_screen.dart';
 import 'transaction_screen.dart';
 import 'package:intl/intl.dart';
 import 'map_screen.dart';
+import '../providers/timezone_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -89,6 +91,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const Spacer(),
             const CurrencySelector(),
+            const SizedBox(width: 8),
+            const TimeZoneSelector(),
           ],
         ),
         actions: [
@@ -446,6 +450,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _transactionTile(Transaction t) {
     final isExpense = t.type == 'expense';
     final currencyProvider = Provider.of<CurrencyProvider>(context);
+    final timeZoneProvider = Provider.of<TimeZoneProvider>(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -472,8 +477,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Text(t.description,
                     style: const TextStyle(fontWeight: FontWeight.w500)),
                 const SizedBox(height: 2),
-                Text(DateFormat('dd/MM/yy').format(t.date),
-                    style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(
+                  timeZoneProvider.format(t.date, pattern: 'dd/MM/yy HH:mm'),
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
               ],
             ),
           ),

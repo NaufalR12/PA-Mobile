@@ -7,6 +7,7 @@ import '../providers/category_provider.dart';
 import '../providers/currency_provider.dart';
 import '../models/transaction_model.dart';
 import '../models/category_model.dart';
+import '../providers/timezone_provider.dart';
 
 class TransactionScreen extends StatefulWidget {
   const TransactionScreen({super.key});
@@ -202,7 +203,15 @@ class _TransactionScreenState extends State<TransactionScreen> {
                     lastDate: DateTime(2100),
                   );
                   if (date != null) {
-                    selectedDate = date;
+                    final now = DateTime.now();
+                    selectedDate = DateTime(
+                      date.year,
+                      date.month,
+                      date.day,
+                      now.hour,
+                      now.minute,
+                      now.second,
+                    );
                   }
                 },
               ),
@@ -795,13 +804,17 @@ class _TransactionScreenState extends State<TransactionScreen> {
                           children: [
                             Text(transaction.description),
                             const SizedBox(height: 4),
-                            Text(
-                              DateFormat('dd MMMM yyyy', 'id_ID')
-                                  .format(transaction.date),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
+                            Consumer<TimeZoneProvider>(
+                              builder: (context, timeZoneProvider, _) {
+                                return Text(
+                                  timeZoneProvider.format(transaction.date,
+                                      pattern: 'dd MMMM yyyy HH:mm'),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                );
+                              },
                             ),
                           ],
                         ),
