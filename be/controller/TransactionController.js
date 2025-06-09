@@ -50,10 +50,18 @@ export const TransactionController = {
         });
       }
 
+      // Pastikan date menyimpan waktu lengkap
+      let dateValue = date;
+      if (typeof date === "string" && date.length === 10) {
+        // Jika hanya tanggal (YYYY-MM-DD), tambahkan jam saat ini
+        const now = new Date();
+        dateValue = `${date}T${now.toTimeString().slice(0, 8)}`;
+      }
+
       const transaction = await Transaction.create({
         amount,
         description,
-        date,
+        date: dateValue,
         type,
         userId,
         categoryId,
