@@ -8,6 +8,8 @@ import 'providers/transaction_provider.dart';
 import 'providers/category_provider.dart';
 import 'providers/plan_provider.dart';
 import 'providers/currency_provider.dart';
+import 'screens/transaction_screen.dart';
+import 'screens/plan_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -61,7 +63,12 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        home: const AuthWrapper(),
+        initialRoute: '/',
+        routes: {
+          '/': (context) => const AuthWrapper(),
+          '/transaction': (context) => const TransactionScreen(),
+          '/plan': (context) => const PlanScreen(),
+        },
       ),
     );
   }

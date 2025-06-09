@@ -3,9 +3,11 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../providers/currency_provider.dart';
+import '../providers/plan_provider.dart';
 import '../models/transaction_model.dart';
 import '../widgets/currency_selector.dart';
 import 'login_screen.dart';
+import 'transaction_screen.dart';
 import 'package:intl/intl.dart';
 import 'map_screen.dart';
 
@@ -87,8 +89,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const Spacer(),
             const CurrencySelector(),
-            const SizedBox(width: 8),
-            if (user != null) profilePhoto(),
           ],
         ),
         actions: [
@@ -152,15 +152,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             );
                           },
                         ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Text('Main Wallet',
-                                style: TextStyle(color: Colors.white70)),
-                            const Icon(Icons.keyboard_arrow_down,
-                                color: Colors.white70),
-                          ],
-                        ),
                       ],
                     ),
                   ),
@@ -199,91 +190,181 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Row(
+                        Column(
                           children: [
-                            _summaryCard(
-                              icon: '🤑',
-                              title: 'Income',
-                              value: FutureBuilder<String>(
-                                future:
-                                    currencyProvider.formatAmount(totalIncome),
-                                builder: (context, snapshot) {
-                                  return Text(
-                                    snapshot.data ?? 'Loading...',
-                                    style: TextStyle(
-                                      color: Colors.green.shade800,
-                                      fontWeight: FontWeight.bold,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.shade50,
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                  );
-                                },
-                              ),
-                              color: Colors.green.shade50,
-                              textColor: Colors.green.shade800,
-                            ),
-                            const SizedBox(width: 12),
-                            _summaryCard(
-                              icon: '💸',
-                              title: 'Expense',
-                              value: FutureBuilder<String>(
-                                future:
-                                    currencyProvider.formatAmount(totalExpense),
-                                builder: (context, snapshot) {
-                                  return Text(
-                                    snapshot.data ?? 'Loading...',
-                                    style: TextStyle(
-                                      color: Colors.red.shade800,
-                                      fontWeight: FontWeight.bold,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('🤑',
+                                            style: TextStyle(fontSize: 24)),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Income',
+                                          style: TextStyle(
+                                            color: Colors.green.shade800,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        FutureBuilder<String>(
+                                          future: currencyProvider
+                                              .formatAmount(totalIncome),
+                                          builder: (context, snapshot) {
+                                            return Text(
+                                              snapshot.data ?? 'Loading...',
+                                              style: TextStyle(
+                                                color: Colors.green.shade800,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
                                     ),
-                                  );
-                                },
-                              ),
-                              color: Colors.red.shade50,
-                              textColor: Colors.red.shade800,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _summaryCard(
-                                icon: '👜',
-                                title: 'Pockets',
-                                value: Text(
-                                  '7 Pockets',
-                                  style: TextStyle(
-                                    color: Colors.brown.shade800,
-                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                color: Colors.brown.shade50,
-                                textColor: Colors.brown.shade800,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: GestureDetector(
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const MapScreen()),
-                                  );
-                                },
-                                child: _summaryCard(
-                                  icon: '🏦',
-                                  title: 'Bank & ATM',
-                                  value: Text(
-                                    'Terdekat',
-                                    style: TextStyle(
-                                      color: Colors.blue.shade800,
-                                      fontWeight: FontWeight.bold,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.all(16),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.shade50,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text('💸',
+                                            style: TextStyle(fontSize: 24)),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Expense',
+                                          style: TextStyle(
+                                            color: Colors.red.shade800,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        FutureBuilder<String>(
+                                          future: currencyProvider
+                                              .formatAmount(totalExpense),
+                                          builder: (context, snapshot) {
+                                            return Text(
+                                              snapshot.data ?? 'Loading...',
+                                              style: TextStyle(
+                                                color: Colors.red.shade800,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  color: Colors.blue.shade50,
-                                  textColor: Colors.blue.shade800,
                                 ),
-                              ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.pushNamed(context, '/plan');
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.brown.shade50,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('📋',
+                                              style: TextStyle(fontSize: 24)),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Rencana',
+                                            style: TextStyle(
+                                              color: Colors.brown.shade800,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Consumer<PlanProvider>(
+                                            builder:
+                                                (context, planProvider, _) {
+                                              return Text(
+                                                '${planProvider.plans.length} Rencana',
+                                                style: TextStyle(
+                                                  color: Colors.brown.shade800,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const MapScreen()),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue.shade50,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Text('🏦',
+                                              style: TextStyle(fontSize: 24)),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Bank & ATM',
+                                            style: TextStyle(
+                                              color: Colors.blue.shade800,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            'Terdekat',
+                                            style: TextStyle(
+                                              color: Colors.blue.shade800,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -294,12 +375,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
-                      children: const [
-                        Text('Recent Transaction',
+                      children: [
+                        const Text('Recent Transaction',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 16)),
-                        Spacer(),
-                        Text('All', style: TextStyle(color: Colors.blue)),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TransactionScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            'All',
+                            style: TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -321,29 +418,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required Color color,
     required Color textColor,
   }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(icon, style: const TextStyle(fontSize: 24)),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.w500,
-              ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(icon, style: const TextStyle(fontSize: 24)),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.w500,
             ),
-            const SizedBox(height: 4),
-            value,
-          ],
-        ),
+          ),
+          const SizedBox(height: 4),
+          value,
+        ],
       ),
     );
   }
