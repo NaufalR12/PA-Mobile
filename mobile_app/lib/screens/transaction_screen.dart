@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'dart:async';
+import 'dart:math';
 import '../providers/transaction_provider.dart';
 import '../providers/category_provider.dart';
 import '../providers/currency_provider.dart';
 import '../models/transaction_model.dart';
 import '../models/category_model.dart';
 import '../providers/timezone_provider.dart';
+import 'package:sensors_plus/sensors_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TransactionScreen extends StatefulWidget {
   const TransactionScreen({super.key});
@@ -25,9 +29,16 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
   final Color kPrimaryColor = const Color(0xFF3383E2);
 
+  bool _shakeToAddEnabled = false;
+  double _shakeThreshold = 15.0;
+  DateTime? _lastShakeTime;
+  StreamSubscription? _accelerometerSubscription;
+
   @override
   void initState() {
     super.initState();
+    _loadShakeToAddPreference();
+    _initShakeListener();
     initializeDateFormatting('id_ID', null).then((_) {
       Future.microtask(() {
         Provider.of<TransactionProvider>(
@@ -41,8 +52,57 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
   @override
   void dispose() {
+    _accelerometerSubscription?.cancel();
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadShakeToAddPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _shakeToAddEnabled = prefs.getBool('shake_to_add') ?? false;
+    });
+  }
+
+  Future<void> _setShakeToAddPreference(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('shake_to_add', value);
+    setState(() {
+      _shakeToAddEnabled = value;
+    });
+  }
+
+  void _initShakeListener() {
+    _accelerometerSubscription = accelerometerEvents.listen((event) {
+      if (!_shakeToAddEnabled) return;
+      double acceleration =
+          sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
+      if (acceleration > _shakeThreshold) {
+        final now = DateTime.now();
+        if (_lastShakeTime == null ||
+            now.difference(_lastShakeTime!) > Duration(seconds: 2)) {
+          _lastShakeTime = now;
+          _showTransactionDialog(
+            context,
+            Provider.of<TransactionProvider>(context, listen: false),
+            Provider.of<CategoryProvider>(context, listen: false),
+          );
+        }
+      }
+    });
+  }
+
+  Widget _buildShakeToAddSwitch() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        const Text('Shake-to-Add'),
+        Switch(
+          value: _shakeToAddEnabled,
+          onChanged: (value) => _setShakeToAddPreference(value),
+        ),
+      ],
+    );
   }
 
   List<Transaction> _filterTransactions(
@@ -663,6 +723,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
       ),
       body: Column(
         children: [
+          _buildShakeToAddSwitch(),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
