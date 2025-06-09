@@ -23,13 +23,17 @@ class _TransactionScreenState extends State<TransactionScreen> {
   String _selectedDateFilter = 'all'; // 'all', 'day', 'month', 'year'
   DateTime? _selectedDate;
 
+  final Color kPrimaryColor = const Color(0xFF3383E2);
+
   @override
   void initState() {
     super.initState();
     initializeDateFormatting('id_ID', null).then((_) {
       Future.microtask(() {
-        Provider.of<TransactionProvider>(context, listen: false)
-            .loadTransactions();
+        Provider.of<TransactionProvider>(
+          context,
+          listen: false,
+        ).loadTransactions();
         Provider.of<CategoryProvider>(context, listen: false).loadCategories();
       });
     });
@@ -42,7 +46,9 @@ class _TransactionScreenState extends State<TransactionScreen> {
   }
 
   List<Transaction> _filterTransactions(
-      List<Transaction> transactions, CategoryProvider categoryProvider) {
+    List<Transaction> transactions,
+    CategoryProvider categoryProvider,
+  ) {
     var filteredTransactions = transactions;
 
     // Filter berdasarkan tipe transaksi
@@ -110,8 +116,9 @@ class _TransactionScreenState extends State<TransactionScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title:
-            Text(transaction == null ? 'Tambah Transaksi' : 'Edit Transaksi'),
+        title: Text(
+          transaction == null ? 'Tambah Transaksi' : 'Edit Transaksi',
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -136,9 +143,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
                 value: selectedType,
-                decoration: const InputDecoration(
-                  labelText: 'Tipe',
-                ),
+                decoration: const InputDecoration(labelText: 'Tipe'),
                 items: const [
                   DropdownMenuItem(
                     value: 'income',
@@ -159,14 +164,14 @@ class _TransactionScreenState extends State<TransactionScreen> {
               const SizedBox(height: 16),
               DropdownButtonFormField<int>(
                 value: selectedCategoryId,
-                decoration: const InputDecoration(
-                  labelText: 'Kategori',
-                ),
+                decoration: const InputDecoration(labelText: 'Kategori'),
                 items: categoryProvider.categories
-                    .map((category) => DropdownMenuItem(
-                          value: category.id,
-                          child: Text(category.name),
-                        ))
+                    .map(
+                      (category) => DropdownMenuItem(
+                        value: category.id,
+                        child: Text(category.name),
+                      ),
+                    )
                     .toList(),
                 onChanged: (value) {
                   if (value != null) {
@@ -183,9 +188,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Deskripsi',
-                ),
+                decoration: const InputDecoration(labelText: 'Deskripsi'),
                 maxLines: 3,
               ),
               const SizedBox(height: 16),
@@ -259,11 +262,13 @@ class _TransactionScreenState extends State<TransactionScreen> {
 
               bool success;
               if (transaction == null) {
-                success =
-                    await transactionProvider.createTransaction(newTransaction);
+                success = await transactionProvider.createTransaction(
+                  newTransaction,
+                );
               } else {
-                success =
-                    await transactionProvider.updateTransaction(newTransaction);
+                success = await transactionProvider.updateTransaction(
+                  newTransaction,
+                );
               }
 
               if (success && context.mounted) {
@@ -380,8 +385,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
                             title: const Text('Pilih Tanggal'),
                             subtitle: Text(
                               _selectedDate != null
-                                  ? DateFormat('dd MMMM yyyy', 'id_ID')
-                                      .format(_selectedDate!)
+                                  ? DateFormat(
+                                      'dd MMMM yyyy',
+                                      'id_ID',
+                                    ).format(_selectedDate!)
                                   : 'Belum dipilih',
                             ),
                             trailing: const Icon(Icons.calendar_today),
@@ -391,7 +398,10 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                 initialDate: _selectedDate ?? DateTime.now(),
                                 firstDate: DateTime(2000),
                                 lastDate: DateTime(
-                                    currentYear, currentMonth, currentDay),
+                                  currentYear,
+                                  currentMonth,
+                                  currentDay,
+                                ),
                               );
                               if (date != null) {
                                 setState(() {
@@ -415,7 +425,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                       decoration: const InputDecoration(
                                         border: OutlineInputBorder(),
                                         contentPadding: EdgeInsets.symmetric(
-                                            horizontal: 10),
+                                          horizontal: 10,
+                                        ),
                                       ),
                                       items: List.generate(12, (index) {
                                         final month = index + 1;
@@ -425,17 +436,27 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                             month > currentMonth) {
                                           return DropdownMenuItem(
                                             value: month,
-                                            child: Text(DateFormat(
-                                                    'MMMM', 'id_ID')
-                                                .format(DateTime(2024, month))),
+                                            child: Text(
+                                              DateFormat(
+                                                'MMMM',
+                                                'id_ID',
+                                              ).format(
+                                                DateTime(2024, month),
+                                              ),
+                                            ),
                                             enabled: false,
                                           );
                                         }
                                         return DropdownMenuItem(
                                           value: month,
-                                          child: Text(DateFormat(
-                                                  'MMMM', 'id_ID')
-                                              .format(DateTime(2024, month))),
+                                          child: Text(
+                                            DateFormat(
+                                              'MMMM',
+                                              'id_ID',
+                                            ).format(
+                                              DateTime(2024, month),
+                                            ),
+                                          ),
                                         );
                                       }),
                                       onChanged: (value) {
@@ -458,7 +479,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                       decoration: const InputDecoration(
                                         border: OutlineInputBorder(),
                                         contentPadding: EdgeInsets.symmetric(
-                                            horizontal: 10),
+                                          horizontal: 10,
+                                        ),
                                       ),
                                       items: List.generate(5, (index) {
                                         final year = currentYear - index;
@@ -509,9 +531,14 @@ class _TransactionScreenState extends State<TransactionScreen> {
                               showDialog(
                                 context: context,
                                 builder: (context) => StatefulBuilder(
-                                  builder: (context, setDialogState) =>
+                                  builder: (
+                                    context,
+                                    setDialogState,
+                                  ) =>
                                       AlertDialog(
-                                    title: const Text('Pilih Tahun'),
+                                    title: const Text(
+                                      'Pilih Tahun',
+                                    ),
                                     content: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
@@ -520,7 +547,9 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                               MainAxisAlignment.center,
                                           children: [
                                             IconButton(
-                                              icon: const Icon(Icons.remove),
+                                              icon: const Icon(
+                                                Icons.remove,
+                                              ),
                                               onPressed: () {
                                                 final currentYear =
                                                     _selectedDate?.year ??
@@ -528,7 +557,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                                 if (currentYear > 1900) {
                                                   setDialogState(() {
                                                     _selectedDate = DateTime(
-                                                        currentYear - 1);
+                                                      currentYear - 1,
+                                                    );
                                                   });
                                                 }
                                               },
@@ -537,11 +567,14 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                               (_selectedDate?.year ??
                                                       DateTime.now().year)
                                                   .toString(),
-                                              style:
-                                                  const TextStyle(fontSize: 20),
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                              ),
                                             ),
                                             IconButton(
-                                              icon: const Icon(Icons.add),
+                                              icon: const Icon(
+                                                Icons.add,
+                                              ),
                                               onPressed: () {
                                                 final currentYear =
                                                     _selectedDate?.year ??
@@ -550,7 +583,8 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                                     DateTime.now().year) {
                                                   setDialogState(() {
                                                     _selectedDate = DateTime(
-                                                        currentYear + 1);
+                                                      currentYear + 1,
+                                                    );
                                                   });
                                                 }
                                               },
@@ -561,15 +595,23 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                     ),
                                     actions: [
                                       TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('Batal'),
+                                        onPressed: () => Navigator.pop(
+                                          context,
+                                        ),
+                                        child: const Text(
+                                          'Batal',
+                                        ),
                                       ),
                                       ElevatedButton(
                                         onPressed: () {
                                           this.setState(() {});
-                                          Navigator.pop(context);
+                                          Navigator.pop(
+                                            context,
+                                          );
                                         },
-                                        child: const Text('Pilih'),
+                                        child: const Text(
+                                          'Pilih',
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -607,10 +649,14 @@ class _TransactionScreenState extends State<TransactionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Transaksi'),
+        title: const Text(
+          'Transaksi',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: kPrimaryColor,
         actions: [
           IconButton(
-            icon: const Icon(Icons.filter_list),
+            icon: const Icon(Icons.filter_list, color: Colors.white),
             onPressed: _showFilterDialog,
           ),
         ],
@@ -623,13 +669,18 @@ class _TransactionScreenState extends State<TransactionScreen> {
               controller: _searchController,
               decoration: InputDecoration(
                 hintText: 'Cari transaksi...',
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: Icon(Icons.search, color: kPrimaryColor),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: kPrimaryColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide(color: kPrimaryColor, width: 2),
                 ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear),
+                        icon: Icon(Icons.clear, color: kPrimaryColor),
                         onPressed: () {
                           setState(() {
                             _searchController.clear();
@@ -658,23 +709,39 @@ class _TransactionScreenState extends State<TransactionScreen> {
                           : _selectedFilter == 'income'
                               ? 'Pemasukan'
                               : 'Pengeluaran',
+                      style: TextStyle(
+                        color: _selectedFilter == 'all'
+                            ? kPrimaryColor
+                            : Colors.white,
+                      ),
                     ),
-                    backgroundColor: Colors.blue[100],
+                    backgroundColor:
+                        _selectedFilter == 'all' ? Colors.white : kPrimaryColor,
+                    shape: StadiumBorder(
+                      side: BorderSide(color: kPrimaryColor),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   if (_selectedDateFilter != 'all')
                     Chip(
                       label: Text(
                         _selectedDateFilter == 'day'
-                            ? DateFormat('dd MMMM yyyy', 'id_ID')
-                                .format(_selectedDate!)
+                            ? DateFormat(
+                                'dd MMMM yyyy',
+                                'id_ID',
+                              ).format(_selectedDate!)
                             : _selectedDateFilter == 'month'
-                                ? DateFormat('MMMM yyyy', 'id_ID')
-                                    .format(_selectedDate!)
-                                : DateFormat('yyyy', 'id_ID')
-                                    .format(_selectedDate!),
+                                ? DateFormat(
+                                    'MMMM yyyy',
+                                    'id_ID',
+                                  ).format(_selectedDate!)
+                                : DateFormat(
+                                    'yyyy',
+                                    'id_ID',
+                                  ).format(_selectedDate!),
+                        style: const TextStyle(color: Colors.white),
                       ),
-                      backgroundColor: Colors.green[100],
+                      backgroundColor: kPrimaryColor,
                     ),
                   const Spacer(),
                   TextButton.icon(
@@ -685,8 +752,11 @@ class _TransactionScreenState extends State<TransactionScreen> {
                         _selectedDate = null;
                       });
                     },
-                    icon: const Icon(Icons.clear),
-                    label: const Text('Reset Filter'),
+                    icon: Icon(Icons.clear, color: kPrimaryColor),
+                    label: Text(
+                      'Reset Filter',
+                      style: TextStyle(color: kPrimaryColor),
+                    ),
                   ),
                 ],
               ),
@@ -729,104 +799,135 @@ class _TransactionScreenState extends State<TransactionScreen> {
                   itemCount: filteredTransactions.length,
                   itemBuilder: (context, index) {
                     final transaction = filteredTransactions[index];
-                    return Dismissible(
-                      key: Key(transaction.id.toString()),
-                      background: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 16),
-                        child: const Icon(
-                          Icons.delete,
-                          color: Colors.white,
-                        ),
+                    return Card(
+                      elevation: 3,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
                       ),
-                      direction: DismissDirection.endToStart,
-                      confirmDismiss: (direction) async {
-                        return await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Hapus Transaksi'),
-                                content: const Text(
-                                    'Apakah Anda yakin ingin menghapus transaksi ini?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: const Text('Batal'),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.red),
-                                    child: const Text('Hapus'),
-                                  ),
-                                ],
-                              ),
-                            ) ??
-                            false;
-                      },
-                      onDismissed: (direction) async {
-                        try {
-                          await transactionProvider
-                              .deleteTransaction(transaction.id);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Transaksi berhasil dihapus'),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Gagal menghapus transaksi: $e'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        }
-                      },
-                      child: ListTile(
-                        leading: Icon(
-                          transaction.type == 'income'
-                              ? Icons.arrow_upward
-                              : Icons.arrow_downward,
-                          color: transaction.type == 'income'
-                              ? Colors.green
-                              : Colors.red,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Dismissible(
+                        key: Key(transaction.id.toString()),
+                        background: Container(
+                          color: Colors.red,
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 16),
+                          child: const Icon(Icons.delete, color: Colors.white),
                         ),
-                        title: Text(categoryProvider
-                            .getCategoryName(transaction.categoryId)),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(transaction.description),
-                            const SizedBox(height: 4),
-                            Consumer<TimeZoneProvider>(
-                              builder: (context, timeZoneProvider, _) {
+                        direction: DismissDirection.endToStart,
+                        confirmDismiss: (direction) async {
+                          return await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Hapus Transaksi'),
+                                  content: const Text(
+                                    'Apakah Anda yakin ingin menghapus transaksi ini?',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Batal'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red,
+                                      ),
+                                      child: const Text('Hapus'),
+                                    ),
+                                  ],
+                                ),
+                              ) ??
+                              false;
+                        },
+                        onDismissed: (direction) async {
+                          try {
+                            await transactionProvider.deleteTransaction(
+                              transaction.id,
+                            );
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Transaksi berhasil dihapus'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Gagal menghapus transaksi: $e',
+                                  ),
+                                  backgroundColor: Colors.red,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: kPrimaryColor.withOpacity(0.15),
+                            child: Icon(
+                              transaction.type == 'income'
+                                  ? Icons.arrow_upward
+                                  : Icons.arrow_downward,
+                              color: transaction.type == 'income'
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                          ),
+                          title: Text(
+                            categoryProvider.getCategoryName(
+                              transaction.categoryId,
+                            ),
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(transaction.description),
+                              const SizedBox(height: 4),
+                              Consumer<TimeZoneProvider>(
+                                builder: (context, timeZoneProvider, _) {
+                                  return Text(
+                                    timeZoneProvider.format(
+                                      transaction.createdAt,
+                                      pattern: 'dd MMMM yyyy HH:mm',
+                                    ),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                          trailing: FutureBuilder<String>(
+                            future: Provider.of<CurrencyProvider>(
+                              context,
+                              listen: false,
+                            ).formatAmount(transaction.amount),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
                                 return Text(
-                                  timeZoneProvider.format(transaction.createdAt,
-                                      pattern: 'dd MMMM yyyy HH:mm'),
+                                  snapshot.data!,
                                   style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
+                                    color: transaction.type == 'income'
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 );
-                              },
-                            ),
-                          ],
-                        ),
-                        trailing: FutureBuilder<String>(
-                          future: Provider.of<CurrencyProvider>(context,
-                                  listen: false)
-                              .formatAmount(transaction.amount),
-                          builder: (context, snapshot) {
-                            if (snapshot.hasData) {
+                              }
                               return Text(
-                                snapshot.data!,
+                                'Loading...',
                                 style: TextStyle(
                                   color: transaction.type == 'income'
                                       ? Colors.green
@@ -834,23 +935,14 @@ class _TransactionScreenState extends State<TransactionScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               );
-                            }
-                            return Text(
-                              'Loading...',
-                              style: TextStyle(
-                                color: transaction.type == 'income'
-                                    ? Colors.green
-                                    : Colors.red,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            );
-                          },
-                        ),
-                        onTap: () => _showTransactionDialog(
-                          context,
-                          transactionProvider,
-                          categoryProvider,
-                          transaction: transaction,
+                            },
+                          ),
+                          onTap: () => _showTransactionDialog(
+                            context,
+                            transactionProvider,
+                            categoryProvider,
+                            transaction: transaction,
+                          ),
                         ),
                       ),
                     );
@@ -862,12 +954,13 @@ class _TransactionScreenState extends State<TransactionScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: kPrimaryColor,
         onPressed: () => _showTransactionDialog(
           context,
           Provider.of<TransactionProvider>(context, listen: false),
           Provider.of<CategoryProvider>(context, listen: false),
         ),
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

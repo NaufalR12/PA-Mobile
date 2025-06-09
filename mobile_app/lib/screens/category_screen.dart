@@ -11,6 +11,8 @@ class CategoryScreen extends StatefulWidget {
 }
 
 class _CategoryScreenState extends State<CategoryScreen> {
+  final Color kPrimaryColor = const Color(0xFF3383E2);
+
   @override
   void initState() {
     super.initState();
@@ -29,12 +31,23 @@ class _CategoryScreenState extends State<CategoryScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(category == null ? 'Tambah Kategori' : 'Edit Kategori'),
+        title: Text(
+          category == null ? 'Tambah Kategori' : 'Edit Kategori',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: TextFormField(
           controller: nameController,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Nama Kategori',
-            border: OutlineInputBorder(),
+            labelStyle: TextStyle(color: kPrimaryColor),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: kPrimaryColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: kPrimaryColor, width: 2),
+            ),
           ),
           validator: (value) {
             if (value == null || value.isEmpty) {
@@ -46,9 +59,15 @@ class _CategoryScreenState extends State<CategoryScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Batal'),
+            child: Text('Batal', style: TextStyle(color: kPrimaryColor)),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             onPressed: () async {
               if (nameController.text.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -91,7 +110,10 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 );
               }
             },
-            child: Text(category == null ? 'Tambah' : 'Simpan'),
+            child: Text(
+              category == null ? 'Tambah' : 'Simpan',
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -102,7 +124,11 @@ class _CategoryScreenState extends State<CategoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Kategori'),
+        title: const Text(
+          'Kategori',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: kPrimaryColor,
       ),
       body: Consumer<CategoryProvider>(
         builder: (context, categoryProvider, _) {
@@ -120,80 +146,117 @@ class _CategoryScreenState extends State<CategoryScreen> {
           }
 
           if (categoryProvider.categories.isEmpty) {
-            return const Center(
-              child: Text('Belum ada kategori'),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.category_outlined,
+                    size: 64,
+                    color: kPrimaryColor.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Belum ada kategori',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
             );
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.all(8),
             itemCount: categoryProvider.categories.length,
             itemBuilder: (context, index) {
               final category = categoryProvider.categories[index];
-              return Dismissible(
-                key: Key(category.id.toString()),
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 16),
-                  child: const Icon(
-                    Icons.delete,
-                    color: Colors.white,
-                  ),
+              return Card(
+                elevation: 2,
+                margin: const EdgeInsets.symmetric(vertical: 4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                direction: DismissDirection.endToStart,
-                confirmDismiss: (direction) async {
-                  return await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Hapus Kategori'),
-                          content: const Text(
-                              'Apakah Anda yakin ingin menghapus kategori ini?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Batal'),
-                            ),
-                            ElevatedButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red),
-                              child: const Text('Hapus'),
-                            ),
-                          ],
-                        ),
-                      ) ??
-                      false;
-                },
-                onDismissed: (direction) async {
-                  try {
-                    await categoryProvider.deleteCategory(category.id);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Kategori berhasil dihapus'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Gagal menghapus kategori: $e'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
-                },
-                child: ListTile(
-                  leading: const Icon(Icons.category),
-                  title: Text(category.name),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () => _showCategoryDialog(category: category),
+                child: Dismissible(
+                  key: Key(category.id.toString()),
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 16),
+                    child: const Icon(
+                      Icons.delete,
+                      color: Colors.white,
+                    ),
                   ),
-                  onTap: () => _showCategoryDialog(category: category),
+                  direction: DismissDirection.endToStart,
+                  confirmDismiss: (direction) async {
+                    return await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Hapus Kategori'),
+                            content: const Text(
+                                'Apakah Anda yakin ingin menghapus kategori ini?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: Text('Batal',
+                                    style: TextStyle(color: kPrimaryColor)),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text('Hapus',
+                                    style: TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                        ) ??
+                        false;
+                  },
+                  onDismissed: (direction) async {
+                    try {
+                      await categoryProvider.deleteCategory(category.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Kategori berhasil dihapus'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Gagal menghapus kategori: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: kPrimaryColor.withOpacity(0.15),
+                      child: Icon(Icons.category, color: kPrimaryColor),
+                    ),
+                    title: Text(
+                      category.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    trailing: IconButton(
+                      icon: Icon(Icons.edit, color: kPrimaryColor),
+                      onPressed: () => _showCategoryDialog(category: category),
+                    ),
+                    onTap: () => _showCategoryDialog(category: category),
+                  ),
                 ),
               );
             },
@@ -201,8 +264,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: kPrimaryColor,
         onPressed: () => _showCategoryDialog(),
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }

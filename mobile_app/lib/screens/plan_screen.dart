@@ -21,6 +21,7 @@ class _PlanScreenState extends State<PlanScreen> {
   Category? _selectedCategory;
   Plan? _editingPlan;
   bool _isLoading = false;
+  final Color kPrimaryColor = const Color(0xFF3383E2);
 
   @override
   void initState() {
@@ -56,7 +57,10 @@ class _PlanScreenState extends State<PlanScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(plan == null ? 'Tambah Rencana' : 'Edit Rencana'),
+        title: Text(
+          plan == null ? 'Tambah Rencana' : 'Edit Rencana',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: Form(
           key: _formKey,
           child: SingleChildScrollView(
@@ -67,9 +71,18 @@ class _PlanScreenState extends State<PlanScreen> {
                   builder: (context, categoryProvider, _) {
                     return DropdownButtonFormField<Category>(
                       value: _selectedCategory,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Kategori',
-                        border: OutlineInputBorder(),
+                        labelStyle: TextStyle(color: kPrimaryColor),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: kPrimaryColor),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide:
+                              BorderSide(color: kPrimaryColor, width: 2),
+                        ),
                       ),
                       items: categoryProvider.categories.map((category) {
                         return DropdownMenuItem(
@@ -96,7 +109,15 @@ class _PlanScreenState extends State<PlanScreen> {
                   controller: _amountController,
                   decoration: InputDecoration(
                     labelText: 'Jumlah',
-                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(color: kPrimaryColor),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: kPrimaryColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: kPrimaryColor, width: 2),
+                    ),
                     prefixText: Provider.of<CurrencyProvider>(context)
                             .selectedCurrency
                             .symbol +
@@ -116,9 +137,17 @@ class _PlanScreenState extends State<PlanScreen> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _descriptionController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Deskripsi',
-                    border: OutlineInputBorder(),
+                    labelStyle: TextStyle(color: kPrimaryColor),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: kPrimaryColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide(color: kPrimaryColor, width: 2),
+                    ),
                   ),
                   maxLines: 3,
                 ),
@@ -129,11 +158,20 @@ class _PlanScreenState extends State<PlanScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Batal'),
+            child: Text('Batal', style: TextStyle(color: kPrimaryColor)),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kPrimaryColor,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             onPressed: _handleSubmit,
-            child: Text(plan == null ? 'Tambah' : 'Simpan'),
+            child: Text(
+              plan == null ? 'Tambah' : 'Simpan',
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -236,14 +274,20 @@ class _PlanScreenState extends State<PlanScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: Text('Batal', style: TextStyle(color: kPrimaryColor)),
           ),
-          TextButton(
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             onPressed: () {
               Navigator.pop(context);
               _deletePlan(planId);
             },
-            child: const Text('Hapus'),
+            child: const Text('Hapus', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -280,7 +324,11 @@ class _PlanScreenState extends State<PlanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Rencana'),
+        title: const Text(
+          'Rencana',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        backgroundColor: kPrimaryColor,
       ),
       body: Consumer<PlanProvider>(
         builder: (context, planProvider, _) {
@@ -298,12 +346,30 @@ class _PlanScreenState extends State<PlanScreen> {
           }
 
           if (planProvider.plans.isEmpty) {
-            return const Center(
-              child: Text('Belum ada rencana'),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.assignment_outlined,
+                    size: 64,
+                    color: kPrimaryColor.withOpacity(0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Belum ada rencana',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
             );
           }
 
           return ListView.builder(
+            padding: const EdgeInsets.all(8),
             itemCount: planProvider.plans.length,
             itemBuilder: (context, index) {
               final plan = planProvider.plans[index];
@@ -312,82 +378,112 @@ class _PlanScreenState extends State<PlanScreen> {
                       .categories
                       .firstWhere((c) => c.id == plan.categoryId);
 
-              return Dismissible(
-                key: Key(plan.id.toString()),
-                background: Container(
-                  color: Colors.red,
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.only(right: 16),
-                  child: const Icon(
-                    Icons.delete,
-                    color: Colors.white,
-                  ),
+              return Card(
+                elevation: 3,
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                direction: DismissDirection.endToStart,
-                confirmDismiss: (direction) async {
-                  return await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Hapus Rencana'),
-                          content: const Text(
-                              'Apakah Anda yakin ingin menghapus rencana ini?'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Batal'),
+                child: Dismissible(
+                  key: Key(plan.id.toString()),
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 16),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  direction: DismissDirection.endToStart,
+                  confirmDismiss: (direction) async {
+                    return await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Hapus Rencana'),
+                            content: const Text(
+                                'Apakah Anda yakin ingin menghapus rencana ini?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: Text('Batal',
+                                    style: TextStyle(color: kPrimaryColor)),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: const Text('Hapus',
+                                    style: TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          ),
+                        ) ??
+                        false;
+                  },
+                  onDismissed: (direction) async {
+                    try {
+                      await planProvider.deletePlan(plan.id);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Rencana berhasil dihapus'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Gagal menghapus rencana: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: kPrimaryColor.withOpacity(0.15),
+                              child: Icon(Icons.category, color: kPrimaryColor),
                             ),
-                            ElevatedButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red),
-                              child: const Text('Hapus'),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                getCategoryName(plan.categoryId),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.edit, color: kPrimaryColor),
+                              onPressed: () => _showPlanDialog(plan: plan),
                             ),
                           ],
                         ),
-                      ) ??
-                      false;
-                },
-                onDismissed: (direction) async {
-                  try {
-                    await planProvider.deletePlan(plan.id);
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Rencana berhasil dihapus'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Gagal menghapus rencana: $e'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
-                },
-                child: Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: ListTile(
-                    title: Text(getCategoryName(plan.categoryId)),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                        const SizedBox(height: 12),
                         FutureBuilder<String>(
                           future: Provider.of<CurrencyProvider>(context,
                                   listen: false)
                               .formatAmount(plan.amount),
                           builder: (context, snapshot) {
                             return Text(
-                                'Jumlah: ${snapshot.data ?? 'Loading...'}');
+                              'Jumlah: ${snapshot.data ?? 'Loading...'}',
+                              style: const TextStyle(fontSize: 14),
+                            );
                           },
                         ),
+                        const SizedBox(height: 4),
                         FutureBuilder<String>(
                           future: Provider.of<CurrencyProvider>(context,
                                   listen: false)
@@ -396,6 +492,7 @@ class _PlanScreenState extends State<PlanScreen> {
                             return Text(
                               'Sisa: ${snapshot.data ?? 'Loading...'}',
                               style: TextStyle(
+                                fontSize: 14,
                                 color: plan.remainingAmount > 0
                                     ? Colors.green
                                     : Colors.red,
@@ -405,9 +502,17 @@ class _PlanScreenState extends State<PlanScreen> {
                           },
                         ),
                         if (plan.description != null &&
-                            plan.description!.isNotEmpty)
-                          Text('Deskripsi: ${plan.description}'),
-                        const SizedBox(height: 8),
+                            plan.description!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Deskripsi: ${plan.description}',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 12),
                         LinearProgressIndicator(
                           value: plan.amount > 0
                               ? (plan.amount - plan.remainingAmount) /
@@ -419,8 +524,9 @@ class _PlanScreenState extends State<PlanScreen> {
                                 ? Colors.green
                                 : Colors.red,
                           ),
+                          borderRadius: BorderRadius.circular(4),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         Text(
                           'Penggunaan: ${((plan.amount - plan.remainingAmount) / plan.amount * 100).toStringAsFixed(1)}%',
                           style: TextStyle(
@@ -428,20 +534,8 @@ class _PlanScreenState extends State<PlanScreen> {
                             color: plan.remainingAmount > 0
                                 ? Colors.green
                                 : Colors.red,
+                            fontWeight: FontWeight.w500,
                           ),
-                        ),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => _showPlanDialog(plan: plan),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () => _confirmDeletePlan(plan.id),
                         ),
                       ],
                     ),
@@ -453,8 +547,9 @@ class _PlanScreenState extends State<PlanScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: kPrimaryColor,
         onPressed: () => _showPlanDialog(),
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
