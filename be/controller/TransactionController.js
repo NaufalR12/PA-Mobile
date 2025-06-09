@@ -13,6 +13,16 @@ export const TransactionController = {
       const { amount, description, date, type, categoryId } = req.body;
       const userId = req.query.userId;
 
+      // Log data yang diterima dari frontend
+      console.log("Data transaksi yang diterima:", {
+        amount,
+        description,
+        date,
+        type,
+        categoryId,
+        userId,
+      });
+
       if (!userId) {
         return res.status(400).json({
           status: "error",
@@ -88,6 +98,16 @@ export const TransactionController = {
         ],
         order: [["date", "DESC"]],
       });
+
+      // Tambahkan log untuk melihat data date dan created_at
+      console.log(
+        "Data transaksi dari database:",
+        transactions.map((t) => ({
+          id: t.id,
+          date: t.date,
+          created_at: t.created_at,
+        }))
+      );
 
       res.json({
         status: "success",
