@@ -6,6 +6,7 @@ import '../providers/auth_provider.dart';
 import '../constants/api_constants.dart';
 import 'login_screen.dart';
 import 'dart:io';
+import 'feedback_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -342,6 +343,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const FeedbackScreen(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.feedback_outlined),
+                        label: const Text('Saran & Kesan'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF3383E2),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          minimumSize: const Size(double.infinity, 45),
+                        ),
                       ),
                     ] else if (_isEditing) ...[
                       _buildEditForm(),
