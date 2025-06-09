@@ -254,6 +254,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                 categoryId: selectedCategoryId!,
                 description: descriptionController.text,
                 date: selectedDate,
+                createdAt: transaction?.createdAt ?? DateTime.now(),
               );
 
               bool success;
@@ -807,7 +808,7 @@ class _TransactionScreenState extends State<TransactionScreen> {
                             Consumer<TimeZoneProvider>(
                               builder: (context, timeZoneProvider, _) {
                                 return Text(
-                                  timeZoneProvider.format(transaction.date,
+                                  timeZoneProvider.format(transaction.createdAt,
                                       pattern: 'dd MMMM yyyy HH:mm'),
                                   style: TextStyle(
                                     fontSize: 12,

@@ -5,6 +5,7 @@ class Transaction {
   final int categoryId;
   final String description;
   final DateTime date;
+  final DateTime createdAt;
 
   Transaction({
     required this.id,
@@ -13,6 +14,7 @@ class Transaction {
     required this.categoryId,
     required this.description,
     required this.date,
+    required this.createdAt,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,8 @@ class Transaction {
         categoryId: json['categoryId'] ?? json['category_id'] ?? 0,
         description: json['description'] ?? '',
         date: DateTime.parse(json['date'] ?? DateTime.now().toIso8601String()),
+        createdAt: DateTime.parse(
+            json['created_at'] ?? DateTime.now().toIso8601String()),
       );
     } catch (e) {
       print('Error parsing Transaction JSON: $e');
@@ -47,6 +51,7 @@ class Transaction {
       'categoryId': categoryId,
       'description': description,
       'date': date.toIso8601String(),
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 }

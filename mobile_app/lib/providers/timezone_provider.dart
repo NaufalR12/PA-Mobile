@@ -16,6 +16,14 @@ class TimeZoneProvider with ChangeNotifier {
     TimeZoneInfo(name: 'WIT', label: 'WIT (GMT+9)', offset: Duration(hours: 9)),
     TimeZoneInfo(
         name: 'London', label: 'London (GMT+0)', offset: Duration(hours: 0)),
+    TimeZoneInfo(
+        name: 'New York',
+        label: 'New York (GMT-4)',
+        offset: Duration(hours: -4)),
+    TimeZoneInfo(
+        name: 'Tokyo', label: 'Tokyo (GMT+9)', offset: Duration(hours: 9)),
+    TimeZoneInfo(
+        name: 'Sydney', label: 'Sydney (GMT+10)', offset: Duration(hours: 10)),
     // Tambahkan zona lain jika perlu
   ];
 

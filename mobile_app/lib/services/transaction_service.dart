@@ -51,6 +51,7 @@ class TransactionService {
       'categoryId': transaction.categoryId,
       'description': transaction.description,
       'date': transaction.date.toIso8601String(),
+      'created_at': transaction.createdAt.toIso8601String(),
     };
 
     print('Creating transaction at: $baseUrl/transaction?userId=$userId');
@@ -86,6 +87,7 @@ class TransactionService {
       'categoryId': transaction.categoryId,
       'description': transaction.description,
       'date': transaction.date.toIso8601String(),
+      'created_at': transaction.createdAt.toIso8601String(),
       'userId': userId,
     };
 
