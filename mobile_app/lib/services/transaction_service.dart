@@ -88,11 +88,10 @@ class TransactionService {
       'description': transaction.description,
       'date': transaction.date.toIso8601String(),
       'created_at': transaction.createdAt.toIso8601String(),
-      'userId': userId,
     };
 
     final response = await http.put(
-      Uri.parse('$baseUrl/transaction/${transaction.id}'),
+      Uri.parse('$baseUrl/transaction/${transaction.id}?userId=$userId'),
       headers: {
         'Content-Type': 'application/json',
       },
