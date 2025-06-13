@@ -254,12 +254,17 @@ class _MapScreenState extends State<MapScreen> {
           final List<dynamic> coordinates =
               data['routes'][0]['geometry']['coordinates'];
           final List<LatLng> polylineCoordinates = coordinates
-              .map((coord) => LatLng(coord[1].toDouble(), coord[0].toDouble()))
+              .map((coord) => LatLng(
+                    double.parse(coord[1].toString()),
+                    double.parse(coord[0].toString()),
+                  ))
               .toList();
 
           // Mendapatkan jarak dan durasi
-          final double distanceInMeters = data['routes'][0]['distance'];
-          final double durationInSeconds = data['routes'][0]['duration'];
+          final double distanceInMeters =
+              data['routes'][0]['distance'].toDouble();
+          final double durationInSeconds =
+              data['routes'][0]['duration'].toDouble();
 
           // Konversi ke format yang lebih mudah dibaca
           String formattedDistance;
